@@ -11,6 +11,16 @@ if (!reduceMotion) {
   intro.setAttribute('aria-hidden', 'true');
   const center = document.createElement('div');
   center.className = 'intro-center';
+  const mark = document.createElement('div');
+  mark.className = 'intro-mark';
+  mark.innerHTML = `
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" fill="none" stroke="#c9a35c" stroke-width="1.4"/>
+      <circle cx="32" cy="32" r="25.5" fill="none" stroke="#c9a35c" stroke-width="0.7" stroke-opacity="0.35"/>
+      <path d="M32 2.5 L34.3 6.5 L32 10.5 L29.7 6.5 Z" fill="#c9a35c"/>
+      <text x="31" y="40" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-style="italic" font-weight="700" font-size="29" fill="#c9a35c">G</text>
+      <text x="32" y="52" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="600" font-size="8.5" letter-spacing="2.5" fill="#f3ece1">221</text>
+    </svg>`;
   const name = document.createElement('div');
   name.className = 'intro-name';
   [...'G221'].forEach((ch, i) => {
@@ -22,7 +32,7 @@ if (!reduceMotion) {
   });
   const line = document.createElement('div');
   line.className = 'intro-line';
-  center.append(name, line);
+  center.append(mark, name, line);
   intro.appendChild(center);
   document.body.prepend(intro);
   document.body.classList.add('intro-lock');
