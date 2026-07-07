@@ -1,5 +1,43 @@
 // Galerie 221 — интерактивност и анимации
 
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canHover = window.matchMedia('(hover: hover)').matches;
+
+/* ============ Синематичен intro ============ */
+
+if (!reduceMotion) {
+  const intro = document.createElement('div');
+  intro.className = 'intro';
+  intro.setAttribute('aria-hidden', 'true');
+  const center = document.createElement('div');
+  center.className = 'intro-center';
+  const name = document.createElement('div');
+  name.className = 'intro-name';
+  [...'G221'].forEach((ch, i) => {
+    const s = document.createElement('span');
+    s.className = 'in' + (/\d/.test(ch) ? ' gold' : '');
+    s.style.setProperty('--i', i);
+    s.textContent = ch;
+    name.appendChild(s);
+  });
+  const line = document.createElement('div');
+  line.className = 'intro-line';
+  center.append(name, line);
+  intro.appendChild(center);
+  document.body.prepend(intro);
+  document.body.classList.add('intro-lock');
+
+  setTimeout(() => name.classList.add('lit'), 1250);   // буквите засияват
+  setTimeout(() => intro.classList.add('leave'), 1950); // завесата тръгва нагоре
+  setTimeout(() => {
+    intro.remove();
+    document.body.classList.remove('intro-lock');
+    document.body.classList.add('loaded'); // пуска hero анимацията
+  }, 2750);
+} else {
+  document.body.classList.add('loaded');
+}
+
 /* ============ Данни за марките ============
    TODO: заменете SVG плейсхолдърите с реални снимки,
    като добавите поле image: 'images/produkt.jpg' на продукт. */
@@ -210,15 +248,45 @@ const observer = new IntersectionObserver(
 
 document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
 
+/* ============ Mask reveal на заглавията ============ */
+
+document.querySelectorAll('.title-mask').forEach((title) => {
+  const inner = document.createElement('span');
+  inner.className = 'mask-inner';
+  inner.textContent = title.textContent;
+  title.textContent = '';
+  title.appendChild(inner);
+  observer.observe(title);
+});
+
+/* ============ 3D tilt + отблясък на картите ============ */
+
+if (!reduceMotion && canHover) {
+  document.querySelectorAll('.service-card, .contact-card').forEach((card) => {
+    card.addEventListener('mousemove', (e) => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width;
+      const y = (e.clientY - r.top) / r.height;
+      card.style.transform =
+        `perspective(700px) rotateX(${(0.5 - y) * 8}deg) rotateY(${(x - 0.5) * 10}deg) translateY(-6px)`;
+      card.style.setProperty('--mx', x * 100 + '%');
+      card.style.setProperty('--my', y * 100 + '%');
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  });
+}
+
 /* ============ Златни частици в hero ============ */
 
 const canvas = document.getElementById('particles');
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 if (canvas && !reduceMotion) {
   const ctx = canvas.getContext('2d');
+  const heroInner = document.querySelector('.hero-inner');
   let particles = [];
   let w, h;
+  // паралакс: целта следва мишката, offset-ът я догонва плавно
+  let tx = 0, ty = 0, offX = 0, offY = 0;
 
   function resize() {
     w = canvas.width = canvas.offsetWidth;
@@ -229,6 +297,7 @@ if (canvas && !reduceMotion) {
     particles = Array.from({ length: Math.min(110, (w * h) / 14000) }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
+      z: Math.random() * 0.85 + 0.15, // дълбочина на слоя
       r: Math.random() * 1.8 + 0.4,
       vx: (Math.random() - 0.5) * 0.18,
       vy: -Math.random() * 0.3 - 0.06,
@@ -237,7 +306,16 @@ if (canvas && !reduceMotion) {
     }));
   }
 
+  if (canHover) {
+    window.addEventListener('mousemove', (e) => {
+      tx = e.clientX / window.innerWidth - 0.5;
+      ty = e.clientY / window.innerHeight - 0.5;
+    });
+  }
+
   function tick() {
+    offX += (tx - offX) * 0.045;
+    offY += (ty - offY) * 0.045;
     ctx.clearRect(0, 0, w, h);
     for (const p of particles) {
       p.x += p.vx;
@@ -247,10 +325,16 @@ if (canvas && !reduceMotion) {
       if (p.x < -6) p.x = w + 6;
       if (p.x > w + 6) p.x = -6;
       const a = 0.25 + Math.sin(p.tw) * 0.2;
+      // по-близките частици (по-голямо z) се местят повече — усещане за дълбочина
+      const px = p.x - offX * 46 * p.z;
+      const py = p.y - offY * 30 * p.z;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.arc(px, py, p.r * (0.6 + p.z * 0.6), 0, Math.PI * 2);
       ctx.fillStyle = `rgba(201, 163, 92, ${a})`;
       ctx.fill();
+    }
+    if (heroInner) {
+      heroInner.style.transform = `translate(${offX * -18}px, ${offY * -12}px)`;
     }
     requestAnimationFrame(tick);
   }

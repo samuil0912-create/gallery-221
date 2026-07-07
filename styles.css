@@ -97,6 +97,7 @@ body.cursor-hover .cursor-ring {
 .nav-links { display: flex; align-items: center; gap: 1.75rem; list-style: none; }
 
 .nav-links a:not(.btn) {
+  position: relative;
   color: var(--ink-soft);
   text-decoration: none;
   font-size: 0.92rem;
@@ -106,6 +107,22 @@ body.cursor-hover .cursor-ring {
 }
 
 .nav-links a:not(.btn):hover { color: var(--gold); }
+
+/* Златна линия, която се изрисува под линка */
+.nav-links a:not(.btn)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 1px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-links a:not(.btn):hover::after { transform: scaleX(1); }
 
 .nav-toggle {
   display: none;
@@ -336,6 +353,17 @@ body.cursor-hover .cursor-ring {
   max-width: 52ch;
 }
 
+/* Mask reveal на заглавията — текстът се "изрязва" отдолу нагоре */
+.title-mask { overflow: hidden; }
+
+.title-mask .mask-inner {
+  display: block;
+  transform: translateY(112%);
+  transition: transform 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.title-mask.visible .mask-inner { transform: none; }
+
 /* Scroll reveal */
 .reveal {
   opacity: 0;
@@ -358,6 +386,10 @@ body.cursor-hover .cursor-ring {
 }
 
 .service-card {
+  position: relative;
+  overflow: hidden;
+  --mx: 50%;
+  --my: 50%;
   background: var(--bg-card);
   border: 1px solid rgba(201, 163, 92, 0.14);
   border-radius: var(--radius);
@@ -366,6 +398,21 @@ body.cursor-hover .cursor-ring {
 }
 
 .service-card:hover { transform: translateY(-8px); border-color: var(--gold); }
+
+/* Златен отблясък, следващ мишката (3D tilt) */
+.service-card::after,
+.contact-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mx) var(--my), rgba(201, 163, 92, 0.16), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+
+.service-card:hover::after,
+.contact-card:hover::after { opacity: 1; }
 
 .service-icon {
   width: 52px; height: 52px;
@@ -607,6 +654,10 @@ body.cursor-hover .cursor-ring {
 }
 
 .contact-card {
+  position: relative;
+  overflow: hidden;
+  --mx: 50%;
+  --my: 50%;
   background: var(--bg-card);
   border: 1px solid rgba(201, 163, 92, 0.14);
   border-radius: var(--radius);
@@ -654,6 +705,83 @@ body.cursor-hover .cursor-ring {
 }
 
 .site-footer p { font-size: 0.87rem; }
+
+/* ============ Синематичен intro ============ */
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #080605;
+  display: grid;
+  place-items: center;
+  transition: transform 0.9s cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+.intro::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.intro.leave { transform: translateY(-100%); }
+
+.intro.leave::after { opacity: 1; }
+
+.intro-center { text-align: center; }
+
+.intro-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(3.4rem, 12vw, 7rem);
+  letter-spacing: 0.06em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--gold);
+}
+
+.intro-name .in {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.45em) scale(0.92);
+  animation: introIn 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i) * 140ms + 200ms);
+}
+
+@keyframes introIn {
+  to { opacity: 1; transform: none; }
+}
+
+.intro-name.lit .in {
+  color: var(--gold);
+  -webkit-text-stroke-color: transparent;
+  text-shadow: 0 0 40px rgba(201, 163, 92, 0.6);
+  transition: color 0.5s, text-shadow 0.5s, -webkit-text-stroke-color 0.5s;
+}
+
+.intro-line {
+  width: 0;
+  height: 1px;
+  margin: 1.4rem auto 0;
+  background: var(--gold);
+  animation: introLine 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 0.9s;
+}
+
+@keyframes introLine {
+  to { width: 150px; }
+}
+
+body.intro-lock { overflow: hidden; }
+
+/* Hero анимацията изчаква завесата да се вдигне */
+body:not(.loaded) .split-letters .ch { animation-play-state: paused; }
 
 /* ============ Мобилни устройства ============ */
 
@@ -732,4 +860,8 @@ body.cursor-hover .cursor-ring {
   .marquee-track, .orbit, .about-ring, .scroll-hint span { animation: none; }
 
   .reveal { opacity: 1; transform: none; transition: none; }
+
+  .title-mask .mask-inner { transform: none; transition: none; }
+
+  .nav-links a:not(.btn)::after { transition: none; }
 }
