@@ -150,6 +150,7 @@ buildOrbit('km');
 /* ============ Анимация буква по буква (hero) ============ */
 
 const h1 = document.querySelector('.split-letters');
+const heroLetters = [];
 if (h1) {
   const text = h1.dataset.text || h1.textContent;
   h1.textContent = '';
@@ -157,9 +158,40 @@ if (h1) {
     const span = document.createElement('span');
     span.className = 'ch' + (/\d/.test(ch) ? ' gold' : '');
     span.style.setProperty('--i', i);
+    heroLetters.push(span);
     span.textContent = ch === ' ' ? ' ' : ch;
     h1.appendChild(span);
   });
+
+  // След интро анимацията буквите стават "ready" за hover вълната
+  heroLetters[heroLetters.length - 1].addEventListener('animationend', () => {
+    heroLetters.forEach((l) => l.classList.add('ready'));
+  });
+
+  // Вълна: тръгва от буквата под курсора и се разлива към съседните
+  const rippleTimers = [];
+  function ripple(from) {
+    rippleTimers.forEach(clearTimeout);
+    rippleTimers.length = 0;
+    heroLetters.forEach((l, j) => {
+      const dist = Math.abs(j - from);
+      rippleTimers.push(setTimeout(() => l.classList.add('wave'), dist * 45));
+      rippleTimers.push(setTimeout(() => l.classList.remove('wave'), dist * 45 + 420));
+    });
+  }
+
+  heroLetters.forEach((l, i) => {
+    l.addEventListener('mouseenter', () => {
+      if (l.classList.contains('ready')) ripple(i);
+    });
+  });
+
+  // На тъч устройства — вълна при докосване на заглавието
+  h1.addEventListener('touchstart', () => {
+    if (heroLetters[0].classList.contains('ready')) {
+      ripple(Math.floor(heroLetters.length / 2));
+    }
+  }, { passive: true });
 }
 
 /* ============ Scroll reveal ============ */

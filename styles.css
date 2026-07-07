@@ -218,13 +218,35 @@ body.cursor-hover .cursor-ring {
   to { opacity: 1; transform: translateY(0) rotate(0); }
 }
 
+/* Hover вълна върху заглавието — тръгва от буквата под курсора */
+.split-letters { cursor: default; }
+
+.split-letters .ch.ready {
+  animation: none;
+  opacity: 1;
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    color 0.35s ease,
+    text-shadow 0.35s ease,
+    -webkit-text-stroke-color 0.35s ease;
+}
+
+.split-letters .ch.ready.wave {
+  transform: translateY(-0.22em) scale(1.14) rotate(-5deg);
+  color: var(--gold);
+  text-shadow:
+    0 0 22px rgba(201, 163, 92, 0.85),
+    0 0 70px rgba(201, 163, 92, 0.45);
+}
+
+.split-letters .ch.ready.wave:nth-child(even) {
+  transform: translateY(-0.22em) scale(1.14) rotate(5deg);
+}
+
 .hero-sub {
   font-size: clamp(1.02rem, 2.2vw, 1.2rem);
   color: var(--ink-soft);
-  margin-bottom: 2.6rem;
 }
-
-.hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
 .scroll-hint {
   position: absolute;
