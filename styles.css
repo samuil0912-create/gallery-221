@@ -555,8 +555,8 @@ body.cursor-hover .cursor-ring {
 /* Орбитата */
 .orbit {
   position: relative;
-  width: 240px;
-  height: 340px;
+  width: 250px;
+  height: 400px;
   transform-style: preserve-3d;
   animation: orbitSpin 36s linear infinite;
 }
@@ -586,15 +586,17 @@ body.cursor-hover .cursor-ring {
 
 .orbit-card .product-visual {
   flex: 1;
+  min-height: 0;
   display: grid;
   place-items: center;
   width: 100%;
 }
 
-.orbit-card .product-visual svg { height: 150px; }
+.orbit-card .product-visual svg { height: 140px; max-height: 100%; }
 
 .orbit-card .product-visual img {
-  max-height: 160px;
+  max-height: 150px;
+  max-width: 82%;
   object-fit: contain;
 }
 
