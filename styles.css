@@ -99,12 +99,33 @@ body.cursor-hover .cursor-ring {
   width: 42px;
   height: 42px;
   flex-shrink: 0;
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.logo:hover .logo-mark { transform: rotate(180deg); }
-
 .logo .logo-text span { color: var(--gold); }
+
+/* Постоянна анимация на емблемата: пунктираният пръстен се върти,
+   диамантът пулсира — работи и на телефон, без hover */
+.ring-dash {
+  stroke-dasharray: 3.2 5.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ringSpinSlow 16s linear infinite;
+}
+
+@keyframes ringSpinSlow {
+  to { transform: rotate(360deg); }
+}
+
+.diamond {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: diamondPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes diamondPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.82); }
+}
 
 .nav-links { display: flex; align-items: center; gap: 1.75rem; list-style: none; }
 
@@ -889,4 +910,6 @@ body:not(.loaded) .split-letters .ch { animation-play-state: paused; }
   .title-mask .mask-inner { transform: none; transition: none; }
 
   .nav-links a:not(.btn)::after { transition: none; }
+
+  .ring-dash, .diamond { animation: none; }
 }

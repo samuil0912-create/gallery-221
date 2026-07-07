@@ -16,8 +16,8 @@ if (!reduceMotion) {
   mark.innerHTML = `
     <svg viewBox="0 0 64 64" aria-hidden="true">
       <circle cx="32" cy="32" r="30" fill="none" stroke="#c9a35c" stroke-width="1.4"/>
-      <circle cx="32" cy="32" r="25.5" fill="none" stroke="#c9a35c" stroke-width="0.7" stroke-opacity="0.35"/>
-      <path d="M32 2.5 L34.3 6.5 L32 10.5 L29.7 6.5 Z" fill="#c9a35c"/>
+      <circle class="ring-dash" cx="32" cy="32" r="25.5" fill="none" stroke="#c9a35c" stroke-width="0.9" stroke-opacity="0.55"/>
+      <path class="diamond" d="M32 2.5 L34.3 6.5 L32 10.5 L29.7 6.5 Z" fill="#c9a35c"/>
       <text x="31" y="40" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-style="italic" font-weight="700" font-size="29" fill="#c9a35c">G</text>
       <text x="32" y="52" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="600" font-size="8.5" letter-spacing="2.5" fill="#f3ece1">221</text>
     </svg>`;
