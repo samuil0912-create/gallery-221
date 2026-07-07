@@ -269,29 +269,44 @@ body.cursor-hover .cursor-ring {
   to { opacity: 1; transform: translateY(0) rotate(0); }
 }
 
-/* Hover вълна върху заглавието — тръгва от буквата под курсора */
+/* Постоянна анимация на заглавието: течен златен блясък, който минава
+   през буквите, а самите букви леко "плуват" с разместени фази */
 .split-letters { cursor: default; }
 
+.split-letters .ch { --base: var(--ink); }
+.split-letters .ch.gold { --base: var(--gold); }
+
 .split-letters .ch.ready {
-  animation: none;
   opacity: 1;
-  transition:
-    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
-    color 0.35s ease,
-    text-shadow 0.35s ease,
-    -webkit-text-stroke-color 0.35s ease;
+  background-image: linear-gradient(
+    115deg,
+    var(--base) 38%,
+    #ffe9bd 48%,
+    #fff7e6 50%,
+    #ffe9bd 52%,
+    var(--base) 62%
+  );
+  background-size: 300% 100%;
+  background-position: 130% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation:
+    chSheen 5.2s linear infinite calc(var(--i) * 90ms),
+    chFloat 3.8s ease-in-out infinite calc(var(--i) * -320ms);
 }
 
-.split-letters .ch.ready.wave {
-  transform: translateY(-0.22em) scale(1.14) rotate(-5deg);
-  color: var(--gold);
-  text-shadow:
-    0 0 22px rgba(201, 163, 92, 0.85),
-    0 0 70px rgba(201, 163, 92, 0.45);
+/* блясъкът минава бързо, после кратка пауза до следващото преминаване */
+@keyframes chSheen {
+  0% { background-position: 130% 0; }
+  32% { background-position: -40% 0; }
+  100% { background-position: -40% 0; }
 }
 
-.split-letters .ch.ready.wave:nth-child(even) {
-  transform: translateY(-0.22em) scale(1.14) rotate(5deg);
+@keyframes chFloat {
+  0%, 100% { transform: translateY(0.045em); }
+  50% { transform: translateY(-0.075em); }
 }
 
 .hero-sub {
@@ -902,6 +917,13 @@ body:not(.loaded) .split-letters .ch { animation-play-state: paused; }
   html { scroll-behavior: auto; }
 
   .split-letters .ch { animation: none; opacity: 1; transform: none; }
+
+  .split-letters .ch.ready {
+    animation: none;
+    background: none;
+    color: var(--base);
+    -webkit-text-fill-color: currentColor;
+  }
 
   .marquee-track, .orbit, .about-ring, .scroll-hint span { animation: none; }
 

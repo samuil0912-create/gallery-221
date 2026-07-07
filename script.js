@@ -211,50 +211,11 @@ if (h1) {
     h1.appendChild(span);
   });
 
-  // След интро анимацията буквите стават "ready" за hover вълната
+  // След интро анимацията буквите минават в постоянния режим
+  // (златен блясък + плуване) — чист CSS, работи и на телефон
   heroLetters[heroLetters.length - 1].addEventListener('animationend', () => {
     heroLetters.forEach((l) => l.classList.add('ready'));
   });
-
-  // Вълна: тръгва от буквата под курсора и се разлива към съседните
-  const rippleTimers = [];
-  function ripple(from) {
-    rippleTimers.forEach(clearTimeout);
-    rippleTimers.length = 0;
-    heroLetters.forEach((l, j) => {
-      const dist = Math.abs(j - from);
-      rippleTimers.push(setTimeout(() => l.classList.add('wave'), dist * 45));
-      rippleTimers.push(setTimeout(() => l.classList.remove('wave'), dist * 45 + 420));
-    });
-  }
-
-  heroLetters.forEach((l, i) => {
-    l.addEventListener('mouseenter', () => {
-      if (l.classList.contains('ready')) ripple(i);
-    });
-  });
-
-  // На тъч устройства — вълна при докосване на заглавието
-  h1.addEventListener('touchstart', () => {
-    if (heroLetters[0].classList.contains('ready')) {
-      ripple(Math.floor(heroLetters.length / 2));
-    }
-  }, { passive: true });
-
-  // Постоянна вълна: минава сама през буквите на всеки няколко секунди,
-  // само докато заглавието се вижда на екрана
-  if (!reduceMotion) {
-    let heroVisible = true;
-    new IntersectionObserver((entries) => {
-      heroVisible = entries[0].isIntersecting;
-    }, { threshold: 0.2 }).observe(h1);
-
-    setInterval(() => {
-      if (heroVisible && !document.hidden && heroLetters[0].classList.contains('ready')) {
-        ripple(0); // тръгва от първата буква и се разлива надясно
-      }
-    }, 3800);
-  }
 }
 
 /* ============ Scroll reveal ============ */
