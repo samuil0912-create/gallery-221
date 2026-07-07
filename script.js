@@ -240,6 +240,21 @@ if (h1) {
       ripple(Math.floor(heroLetters.length / 2));
     }
   }, { passive: true });
+
+  // Постоянна вълна: минава сама през буквите на всеки няколко секунди,
+  // само докато заглавието се вижда на екрана
+  if (!reduceMotion) {
+    let heroVisible = true;
+    new IntersectionObserver((entries) => {
+      heroVisible = entries[0].isIntersecting;
+    }, { threshold: 0.2 }).observe(h1);
+
+    setInterval(() => {
+      if (heroVisible && !document.hidden && heroLetters[0].classList.contains('ready')) {
+        ripple(0); // тръгва от първата буква и се разлива надясно
+      }
+    }, 3800);
+  }
 }
 
 /* ============ Scroll reveal ============ */
