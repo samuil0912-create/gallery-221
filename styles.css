@@ -523,7 +523,7 @@ body.cursor-hover .cursor-ring {
 .orbit-stage {
   position: relative;
   height: 560px;
-  perspective: 1400px;
+  perspective: 2200px;
   transform-style: preserve-3d;
   display: flex;
   align-items: center;

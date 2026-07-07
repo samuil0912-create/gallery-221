@@ -59,11 +59,18 @@ const BRANDS = {
     title: 'Kevin Murphy — луксозна грижа за косата',
     desc: 'Австралийска професионална марка, вдъхновена от грижата за кожата. Натурални съставки, без сулфати и парабени, устойчиви опаковки — и резултати, които се виждат и усещат. Нашите стилисти подбират индивидуална комбинация за всеки тип коса.',
     products: [
-      { name: 'HYDRATE-ME.WASH', desc: 'Хидратиращ шампоан за суха коса', type: 'pump' },
-      { name: 'ANGEL.MASQUE', desc: 'Възстановяваща маска за тънка и боядисана коса', type: 'jar' },
-      { name: 'BLONDE.ANGEL', desc: 'Тониращa грижа за руса коса', type: 'pump' },
-      { name: 'BEDROOM.HAIR', desc: 'Финиширащ спрей за гъвкава фиксация', type: 'spray' },
-      { name: 'YOUNG.AGAIN', desc: 'Подмладяващо олио без изплакване', type: 'dropper' }
+      { name: 'HYDRATE-ME.WASH', desc: 'Хидратиращ шампоан за суха и боядисана коса', image: 'images/km-hydrate-me-wash.png' },
+      { name: 'BLONDE.ANGEL', desc: 'Тонираща грижа за руса и изсветлена коса', image: 'images/km-blonde-angel.png' },
+      { name: 'YOUNG.AGAIN', desc: 'Подмладяващо олио без изплакване', image: 'images/km-young-again.png' },
+      { name: 'EVERLASTING.COLOUR.WASH', desc: 'Шампоан за дълготраен и наситен цвят', image: 'images/km-everlasting-colour-wash.png' },
+      { name: 'STIMULATE-ME.WASH', desc: 'Освежаващ шампоан, стимулиращ скалпа', image: 'images/km-stimulate-me-wash.png' },
+      { name: 'HEATED.DEFENSE', desc: 'Термозащита без изплакване', image: 'images/km-heated-defense.png' },
+      { name: 'MAXI.WASH', desc: 'Детокс шампоан за дълбоко почистване', image: 'images/km-maxi-wash.png' },
+      { name: 'SMOOTH.AGAIN.WASH', desc: 'Изглаждащ шампоан за непокорна коса', image: 'images/km-smooth-again-wash.png' },
+      { name: 'SMOOTH.AGAIN.RINSE', desc: 'Изглаждащ балсам против цъфтене', image: 'images/km-smooth-again-rinse.png' },
+      { name: 'RE.STORE', desc: 'Възстановяваща почистваща терапия', image: 'images/km-re-store.png' },
+      { name: 'PLUMPING.RINSE', desc: 'Сгъстяващ балсам за изтъняваща коса', image: 'images/km-plumping-rinse.png' },
+      { name: 'BODY.MASS', desc: 'Спрей за обем и плътност без изплакване', image: 'images/km-body-mass.png' }
     ]
   },
   ibx: {
@@ -133,13 +140,14 @@ function buildOrbit(brandKey) {
   const brand = BRANDS[brandKey];
   orbit.innerHTML = '';
   const n = brand.products.length;
-  const radius = 310;
+  // радиусът расте с броя карти, за да не се застъпват (карта ~240px + луфт)
+  const radius = Math.max(310, Math.round((n * 265) / (2 * Math.PI)));
 
   brand.products.forEach((p, i) => {
     const card = document.createElement('article');
     card.className = 'orbit-card';
     const visual = p.image
-      ? `<img src="${p.image}" alt="${p.name}">`
+      ? `<img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">`
       : productSVG(p.type);
     card.innerHTML = `
       <div class="product-visual" aria-hidden="true">${visual}</div>
