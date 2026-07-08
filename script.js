@@ -13,37 +13,15 @@ if (!reduceMotion) {
   center.className = 'intro-center';
   const mark = document.createElement('div');
   mark.className = 'intro-mark';
-  mark.innerHTML = `
-    <svg viewBox="0 0 64 64" aria-hidden="true">
-      <circle cx="32" cy="32" r="30" fill="none" stroke="#c9a35c" stroke-width="1.4"/>
-      <circle class="ring-dash" cx="32" cy="32" r="25.5" fill="none" stroke="#c9a35c" stroke-width="0.9" stroke-opacity="0.55"/>
-      <path class="diamond" d="M32 2.5 L34.3 6.5 L32 10.5 L29.7 6.5 Z" fill="#c9a35c"/>
-      <g stroke="#c9a35c" stroke-width="1.9" stroke-linecap="round" fill="none">
-        <line x1="28.6" y1="37.8" x2="40.5" y2="13.5"/>
-        <line x1="35.4" y1="37.8" x2="23.5" y2="13.5"/>
-        <circle cx="26.6" cy="41" r="3.4" stroke-width="1.6"/>
-        <circle cx="37.4" cy="41" r="3.4" stroke-width="1.6"/>
-      </g>
-      <circle cx="32" cy="30.8" r="1.4" fill="#c9a35c"/>
-      <text x="32" y="54.5" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="600" font-size="8.5" letter-spacing="2.5" fill="#f3ece1">221</text>
-    </svg>`;
-  const name = document.createElement('div');
-  name.className = 'intro-name';
-  [...'G221'].forEach((ch, i) => {
-    const s = document.createElement('span');
-    s.className = 'in' + (/\d/.test(ch) ? ' gold' : '');
-    s.style.setProperty('--i', i);
-    s.textContent = ch;
-    name.appendChild(s);
-  });
+  mark.innerHTML = '<img src="images/logo-full.png" alt="Galerie 221">';
   const line = document.createElement('div');
   line.className = 'intro-line';
-  center.append(mark, name, line);
+  center.append(mark, line);
   intro.appendChild(center);
   document.body.prepend(intro);
   document.body.classList.add('intro-lock');
 
-  setTimeout(() => name.classList.add('lit'), 1250);   // буквите засияват
+  setTimeout(() => mark.classList.add('lit'), 1250);   // логото засиява
   setTimeout(() => intro.classList.add('leave'), 1950); // завесата тръгва нагоре
   setTimeout(() => {
     intro.remove();
