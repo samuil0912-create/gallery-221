@@ -293,74 +293,6 @@ function drawPaint(global, time) {
   });
 }
 
-// ножицата разрязва листа: идва отляво, реже, и страницата се разцепва
-// около точката на рязане — зад нея остава тъмен процеп
-const cuts = [...document.querySelectorAll('.cut')].map((el) => ({
-  el,
-  scissors: el.querySelector('.cut-scissors'),
-  trace: el.querySelector('.cut-trace'),
-  upper: document.querySelector(el.dataset.upper),
-  lower: document.querySelector(el.dataset.lower),
-  state: 'armed',
-  p: 0,
-  lastT: 0
-}));
-
-function runCuts(now, vh) {
-  cuts.forEach((c) => {
-    const y = c.el.getBoundingClientRect().top;
-
-    // задейства се, когато ръбът стигне средата на екрана
-    if (c.state === 'armed' && y > vh * 0.2 && y < vh * 0.82) {
-      c.state = 'cutting';
-      c.p = 0;
-      c.lastT = now;
-      c.el.classList.add('cutting');
-    }
-
-    if (c.state === 'cutting') {
-      const dt = Math.min(50, now - c.lastT);
-      c.lastT = now;
-      c.p += dt / 1400; // цялото рязане ~1.4 сек
-      const x = Math.min(1, c.p);
-      const ease = 1 - Math.pow(1 - x, 2);
-      // листите се разгъват около точката, в която е ножицата
-      const ang = 2.3 * ease;
-      const ox = (x * 100).toFixed(1);
-      c.scissors.style.left = `calc(${(x * 114 - 7).toFixed(2)}%)`;
-      c.trace.style.width = Math.max(0, x * 114 - 7).toFixed(2) + '%';
-      c.upper.style.transformOrigin = `${ox}% 100%`;
-      c.upper.style.transform = `rotate(${(-ang).toFixed(3)}deg)`;
-      c.lower.style.transformOrigin = `${ox}% 0%`;
-      c.lower.style.transform = `rotate(${ang.toFixed(3)}deg)`;
-
-      if (x >= 1) {
-        // срязано: листите се отпускат, процепът остава
-        c.state = 'done';
-        c.el.classList.remove('cutting');
-        c.el.classList.add('done');
-        c.trace.style.width = '0';
-        c.upper.classList.add('sheet-ease');
-        c.lower.classList.add('sheet-ease');
-        requestAnimationFrame(() => {
-          c.upper.style.transform = '';
-          c.lower.style.transform = '';
-        });
-        setTimeout(() => {
-          c.upper.classList.remove('sheet-ease');
-          c.lower.classList.remove('sheet-ease');
-        }, 750);
-      }
-    }
-
-    // презарежда се, когато ръбът излезе далеч от екрана
-    if (c.state === 'done' && (y < -vh * 1.2 || y > vh * 1.5)) {
-      c.state = 'armed';
-      c.el.classList.remove('done');
-    }
-  });
-}
-
 /* ============ Скрол двигател ============ */
 
 const chaptersEl = document.querySelector('.chapters');
@@ -422,9 +354,8 @@ function tick(time) {
     el.style.opacity = fade;
   });
 
-  // бои и искри между категориите + ножицата, която разрязва листа
+  // бои и искри между категориите
   drawPaint(global, time || 0);
-  runCuts(time || 0, vh);
 
   // голямата типография — редовете се разминават
   const bt = bigLines[0]?.closest('.bigtype');

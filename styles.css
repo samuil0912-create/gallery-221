@@ -18,16 +18,12 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font-body);
-  /* тъмната "маса" под листа хартия — вижда се само когато ножицата го разреже */
-  background: #141109;
+  background: var(--paper);
   color: var(--ink);
   line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
-
-/* всяка секция е част от "листа" */
-.hero, .chapters, .bigtype, .foot { background: var(--paper); }
 
 img { max-width: 100%; display: block; }
 
@@ -471,71 +467,6 @@ body.menu-open .menu { opacity: 1; transform: none; pointer-events: auto; }
   mix-blend-mode: multiply;
 }
 
-/* ножицата, която разрязва листа: страницата се разцепва там, където мине */
-.cut {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 0;
-  z-index: 40;
-}
-
-/* следата от рязането — тъмна линия зад ножицата */
-.cut-trace {
-  position: absolute;
-  top: -1.5px;
-  left: 0;
-  width: 0;
-  height: 3px;
-  background: #141109;
-}
-
-/* останалият процеп след срязването — с "накъсани" ръбове */
-.cut-slit {
-  position: absolute;
-  top: -10px;
-  left: 0;
-  right: 0;
-  height: 20px;
-  background: #141109;
-  transform: scaleY(0);
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  clip-path: polygon(0 22%, 5% 8%, 11% 26%, 18% 6%, 26% 24%, 33% 10%, 41% 28%, 49% 8%, 57% 25%, 65% 6%, 73% 27%, 81% 9%, 89% 24%, 95% 7%, 100% 20%, 100% 78%, 94% 92%, 87% 74%, 79% 94%, 71% 76%, 62% 93%, 54% 72%, 46% 91%, 38% 74%, 29% 92%, 21% 73%, 13% 90%, 6% 75%, 0 88%);
-}
-
-.cut.done .cut-slit { transform: scaleY(1); }
-
-.cut-scissors {
-  position: absolute;
-  top: -30px;
-  left: -8%;
-  width: 62px;
-  height: 62px;
-  opacity: 0;
-  will-change: left;
-}
-
-.cut.cutting .cut-scissors { opacity: 1; }
-
-.cut-scissors svg {
-  width: 100%;
-  height: 100%;
-  stroke: var(--ink);
-  fill: none;
-  stroke-width: 2.1;
-  stroke-linecap: round;
-  filter: drop-shadow(0 6px 14px rgba(23, 20, 15, 0.45));
-  animation: snipCut 0.15s ease-in-out infinite; /* остриетата щракат бързо */
-}
-
-@keyframes snipCut {
-  0%, 100% { transform: rotate(-9deg); }
-  50% { transform: rotate(9deg); }
-}
-
-/* плавно прибиране на листите след срязването */
-.sheet-ease { transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1); }
 
 .stage-count {
   position: absolute;
