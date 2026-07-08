@@ -14,16 +14,14 @@ if (!reduceMotion) {
   const mark = document.createElement('div');
   mark.className = 'intro-mark';
   mark.innerHTML = `
-    <img src="images/logo-full.png" alt="Galerie 221">
-    <div class="intro-scan">
-      <div class="intro-scissors">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
-          <line x1="20" y1="4" x2="8.12" y2="15.88"/>
-          <line x1="14.47" y1="14.48" x2="20" y2="20"/>
-          <line x1="8.12" y1="8.12" x2="12" y2="12"/>
-        </svg>
-      </div>
+    <canvas class="intro-canvas"></canvas>
+    <div class="intro-scissors">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
+        <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+        <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+        <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+      </svg>
     </div>`;
   const line = document.createElement('div');
   line.className = 'intro-line';
@@ -32,13 +30,126 @@ if (!reduceMotion) {
   document.body.prepend(intro);
   document.body.classList.add('intro-lock');
 
-  setTimeout(() => mark.classList.add('lit'), 2050);   // логото засиява след изрисуването
-  setTimeout(() => intro.classList.add('leave'), 2700); // завесата тръгва нагоре
-  setTimeout(() => {
-    intro.remove();
-    document.body.classList.remove('intro-lock');
-    document.body.classList.add('loaded'); // пуска hero анимацията
-  }, 3500);
+  const finishIntro = () => {
+    mark.classList.add('lit');
+    setTimeout(() => intro.classList.add('leave'), 700);
+    setTimeout(() => {
+      intro.remove();
+      document.body.classList.remove('intro-lock');
+      document.body.classList.add('loaded'); // пуска hero анимацията
+    }, 1550);
+  };
+
+  // Ножицата обхожда самите линии на логото и ги "изрязва" една по една:
+  // взимаме всички златни пиксели, нареждаме ги в маршрут (най-близка
+  // следваща точка) и разкриваме рисунъка там, откъдето е минала ножицата.
+  const logoImg = new Image();
+  logoImg.src = 'images/logo-full.png';
+  logoImg.onerror = finishIntro;
+  logoImg.onload = () => {
+    const canvas = mark.querySelector('.intro-canvas');
+    const sc = mark.querySelector('.intro-scissors');
+    const W = logoImg.naturalWidth, H = logoImg.naturalHeight;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // всички точки от рисунъка (на стъпки, за скорост)
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const octx = off.getContext('2d', { willReadFrequently: true });
+    octx.drawImage(logoImg, 0, 0);
+    const px = octx.getImageData(0, 0, W, H).data;
+    const step = 5;
+    const pts = [];
+    for (let y = 0; y < H; y += step) {
+      for (let x = 0; x < W; x += step) {
+        if (px[(y * W + x) * 4 + 3] > 60) pts.push({ x, y });
+      }
+    }
+
+    // маршрут "най-близък съсед" с решетка за бързо търсене
+    const cell = 48;
+    const cols = Math.ceil(W / cell);
+    const buckets = new Map();
+    pts.forEach((p, i) => {
+      const k = (p.x / cell | 0) + (p.y / cell | 0) * cols;
+      if (!buckets.has(k)) buckets.set(k, []);
+      buckets.get(k).push(i);
+    });
+    const used = new Uint8Array(pts.length);
+    let cur = 0;
+    pts.forEach((p, i) => {
+      if (p.y < pts[cur].y || (p.y === pts[cur].y && p.x < pts[cur].x)) cur = i;
+    });
+    const tour = [pts[cur]];
+    used[cur] = 1;
+    for (let n = 1; n < pts.length; n++) {
+      const c = pts[cur];
+      const ccx = c.x / cell | 0, ccy = c.y / cell | 0;
+      let best = -1, bestD = Infinity;
+      for (let r = 0; r < Math.max(cols, Math.ceil(H / cell)) && best === -1 || r <= 1; r++) {
+        for (let gy = ccy - r; gy <= ccy + r; gy++) {
+          for (let gx = ccx - r; gx <= ccx + r; gx++) {
+            if (Math.max(Math.abs(gx - ccx), Math.abs(gy - ccy)) !== r) continue;
+            const b = buckets.get(gx + gy * cols);
+            if (!b) continue;
+            for (const i of b) {
+              if (used[i]) continue;
+              const dx = pts[i].x - c.x, dy = pts[i].y - c.y;
+              const d = dx * dx + dy * dy;
+              if (d < bestD) { bestD = d; best = i; }
+            }
+          }
+        }
+        if (best !== -1 && r > 0) break;
+      }
+      if (best === -1) break;
+      used[best] = 1;
+      tour.push(pts[best]);
+      cur = best;
+    }
+
+    // маска: кръгчета по пътя на ножицата разкриват рисунъка
+    const maskCv = document.createElement('canvas');
+    maskCv.width = W; maskCv.height = H;
+    const mctx = maskCv.getContext('2d');
+    mctx.fillStyle = '#fff';
+    const total = tour.length;
+    const dur = 3200;
+    const brush = step * 2.4;
+    let idx = 0, t0 = null;
+
+    function frame(t) {
+      if (t0 === null) t0 = t;
+      const target = Math.min(total, Math.round(((t - t0) / dur) * total));
+      for (; idx < target; idx++) {
+        const p = tour[idx];
+        mctx.beginPath();
+        mctx.arc(p.x, p.y, brush, 0, 6.3);
+        mctx.fill();
+      }
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(logoImg, 0, 0);
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(maskCv, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      if (idx > 0) {
+        const p = tour[Math.min(idx, total) - 1];
+        const q = tour[Math.max(0, idx - 7)];
+        const s = canvas.getBoundingClientRect().height / H;
+        const ang = Math.atan2(p.y - q.y, p.x - q.x);
+        sc.style.transform = `translate(${p.x * s}px, ${p.y * s}px) rotate(${ang}rad)`;
+      }
+      if (idx < total) {
+        requestAnimationFrame(frame);
+      } else {
+        sc.style.opacity = '0';
+        setTimeout(finishIntro, 250);
+      }
+    }
+    requestAnimationFrame(frame);
+  };
 } else {
   document.body.classList.add('loaded');
 }

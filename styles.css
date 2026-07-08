@@ -826,60 +826,27 @@ body.cursor-hover .cursor-ring {
 
 .intro-mark {
   position: relative;
+  width: fit-content;
   margin: 0 auto 1.4rem;
   transition: filter 0.6s;
 }
 
-/* логото се "изрисува" отгоре надолу */
-.intro-mark img {
+.intro-canvas {
   height: min(46vh, 420px);
   width: auto;
-  margin-inline: auto;
-  /* остър ръб на "срязването" — ръбът минава 0% → 100% в синхрон с линията */
-  -webkit-mask-image: linear-gradient(180deg, #000 61.5%, transparent 62%);
-  -webkit-mask-size: 100% 320%;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: 0 90%;
-  mask-image: linear-gradient(180deg, #000 61.5%, transparent 62%);
-  mask-size: 100% 320%;
-  mask-repeat: no-repeat;
-  mask-position: 0 90%;
-  animation: markDraw 1.7s cubic-bezier(0.6, 0.05, 0.3, 1) forwards 0.25s;
+  display: block;
 }
 
-@keyframes markDraw {
-  from { -webkit-mask-position: 0 90%; mask-position: 0 90%; }
-  to { -webkit-mask-position: 0 43.5%; mask-position: 0 43.5%; }
-}
-
-/* пунктирана линия "срежи тук", която слиза с разкриването */
-.intro-scan {
-  position: absolute;
-  left: -14%;
-  right: -14%;
-  top: 0;
-  height: 2px;
-  background: repeating-linear-gradient(90deg, rgba(201, 163, 92, 0.85) 0 9px, transparent 9px 17px);
-  opacity: 0;
-  animation: scanDown 1.7s cubic-bezier(0.6, 0.05, 0.3, 1) forwards 0.25s;
-}
-
-@keyframes scanDown {
-  0% { top: 0; opacity: 0; }
-  8% { opacity: 1; }
-  88% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
-}
-
-/* ножицата, която "изрязва" логото — вози се върху линията и снове
-   наляво-надясно, докато линията слиза */
+/* ножицата, която обхожда всяка линия от рисунъка */
 .intro-scissors {
   position: absolute;
-  width: 36px;
-  height: 36px;
-  top: -17px;
-  left: -3%;
-  animation: cutZigzag 1.7s linear forwards 0.25s;
+  top: 0;
+  left: 0;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  transition: opacity 0.3s;
+  will-change: transform;
 }
 
 .intro-scissors svg {
@@ -889,22 +856,13 @@ body.cursor-hover .cursor-ring {
   fill: none;
   stroke-width: 2;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 9px rgba(201, 163, 92, 0.9));
-  animation: snip 0.2s ease-in-out infinite; /* остриетата "щракат" */
+  filter: drop-shadow(0 0 9px rgba(201, 163, 92, 0.95));
+  animation: snip 0.16s ease-in-out infinite; /* остриетата "щракат" */
 }
 
 @keyframes snip {
-  0%, 100% { transform: rotate(-7deg); }
-  50% { transform: rotate(7deg); }
-}
-
-@keyframes cutZigzag {
-  0% { left: -3%; transform: none; }
-  31% { left: 94%; transform: none; }
-  34% { left: 94%; transform: scaleX(-1); }
-  64% { left: -3%; transform: scaleX(-1); }
-  67% { left: -3%; transform: none; }
-  100% { left: 96%; transform: none; }
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
 }
 
 .intro-mark.lit { filter: drop-shadow(0 0 34px rgba(201, 163, 92, 0.55)); }
