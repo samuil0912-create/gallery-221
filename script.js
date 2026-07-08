@@ -13,7 +13,7 @@ if (!reduceMotion) {
   center.className = 'intro-center';
   const mark = document.createElement('div');
   mark.className = 'intro-mark';
-  mark.innerHTML = '<img src="images/logo-full.png" alt="Galerie 221">';
+  mark.innerHTML = '<img src="images/logo-full.png" alt="Galerie 221"><div class="intro-scan"></div>';
   const line = document.createElement('div');
   line.className = 'intro-line';
   center.append(mark, line);
@@ -21,13 +21,13 @@ if (!reduceMotion) {
   document.body.prepend(intro);
   document.body.classList.add('intro-lock');
 
-  setTimeout(() => mark.classList.add('lit'), 1250);   // логото засиява
-  setTimeout(() => intro.classList.add('leave'), 1950); // завесата тръгва нагоре
+  setTimeout(() => mark.classList.add('lit'), 2050);   // логото засиява след изрисуването
+  setTimeout(() => intro.classList.add('leave'), 2700); // завесата тръгва нагоре
   setTimeout(() => {
     intro.remove();
     document.body.classList.remove('intro-lock');
     document.body.classList.add('loaded'); // пуска hero анимацията
-  }, 2750);
+  }, 3500);
 } else {
   document.body.classList.add('loaded');
 }
