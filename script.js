@@ -2,6 +2,8 @@
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+
 /* ============ Меню и страници-панели ============ */
 
 const menuBtn = document.querySelector('.menu-btn');
@@ -188,6 +190,127 @@ document.querySelectorAll('.hero-floaters .floater').forEach((el, i) => {
   el.appendChild(wrap);
 });
 
+/* ============ Бои, искри и ножици между секциите ============ */
+
+// цветовете на всяка марка — те се смесват при преход
+const PAINTS = [
+  ['#d8a7b8', '#a9b892', '#8f86a8'], // Kevin Murphy — пастелите на бутилките
+  ['#7b5ea7', '#b79ad1', '#4d3d6b'], // IBX — лилаво
+  ['#4f9e97', '#c2a24b', '#8fc1bb'], // Wish Pro — тюркоаз и злато
+  ['#c95d4f', '#e0b6ad', '#8e3b31']  // Teoxane — корал
+];
+
+function seeded(n) { // детерминистичен "random"
+  let s = n * 9301 + 49297;
+  return () => { s = (s * 233280 + 851) % 4759123; return (s % 10000) / 10000; };
+}
+
+// капки боя за всяка граница между глави (1, 2, 3)
+const PAINT_BLOBS = [1, 2, 3].map((k) => {
+  const rnd = seeded(k * 77);
+  const blobs = [];
+  for (let i = 0; i < 16; i++) {
+    const fromPrev = i % 2 === 0;
+    const pal = PAINTS[fromPrev ? k - 1 : k];
+    blobs.push({
+      x: rnd(), y: rnd(),
+      r: 0.10 + rnd() * 0.22,
+      color: pal[Math.floor(rnd() * pal.length)],
+      ph: rnd() * Math.PI * 2,
+      side: fromPrev ? -1 : 1
+    });
+  }
+  const sparks = [];
+  for (let i = 0; i < 26; i++) {
+    const a = rnd() * Math.PI * 2;
+    sparks.push({ cx: 0.3 + rnd() * 0.4, cy: 0.3 + rnd() * 0.4, dx: Math.cos(a), dy: Math.sin(a), sp: 0.12 + rnd() * 0.3 });
+  }
+  return { blobs, sparks };
+});
+
+const paintCanvas = document.querySelector('.paint');
+const paintCtx = paintCanvas ? paintCanvas.getContext('2d') : null;
+
+function sizePaint() {
+  if (!paintCanvas) return;
+  paintCanvas.width = paintCanvas.offsetWidth;
+  paintCanvas.height = paintCanvas.offsetHeight;
+}
+sizePaint();
+window.addEventListener('resize', sizePaint);
+
+function hexToRgb(h) {
+  return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+}
+
+function drawPaint(global, time) {
+  if (!paintCtx) return;
+  const W = paintCanvas.width, H = paintCanvas.height;
+  // най-близката граница между глави
+  let k = Math.round(global);
+  k = Math.min(3, Math.max(1, k));
+  const d = Math.abs(global - k);
+  const zone = 0.42;
+  if (d > zone) {
+    if (paintCanvas.dataset.dirty) { paintCtx.clearRect(0, 0, W, H); delete paintCanvas.dataset.dirty; }
+    return;
+  }
+  paintCanvas.dataset.dirty = '1';
+  const strength = Math.pow(Math.cos((d / zone) * Math.PI / 2), 2); // 0..1
+  const s = (global - k + zone) / (zone * 2); // 0..1 през прехода
+  paintCtx.clearRect(0, 0, W, H);
+  paintCtx.globalCompositeOperation = 'multiply';
+
+  const { blobs, sparks } = PAINT_BLOBS[k - 1];
+  blobs.forEach((b) => {
+    const wob = Math.sin(time * 0.0011 + b.ph);
+    const x = (b.x + wob * 0.04 + (s - 0.5) * 0.34 * b.side) * W;
+    const y = (b.y + Math.cos(time * 0.0009 + b.ph) * 0.05) * H;
+    const r = b.r * (0.55 + strength * 0.75) * Math.min(W, H) * 1.08;
+    const [cr, cg, cb] = hexToRgb(b.color);
+    const g = paintCtx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${cr},${cg},${cb},${0.4 * strength})`);
+    g.addColorStop(0.7, `rgba(${cr},${cg},${cb},${0.17 * strength})`);
+    g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+    paintCtx.fillStyle = g;
+    paintCtx.beginPath();
+    paintCtx.arc(x, y, r, 0, 6.3);
+    paintCtx.fill();
+  });
+
+  // златни искри в пика на смесването
+  paintCtx.globalCompositeOperation = 'source-over';
+  sparks.forEach((sp) => {
+    const t = s;
+    const x = (sp.cx + sp.dx * sp.sp * t) * W;
+    const y = (sp.cy + sp.dy * sp.sp * t) * H;
+    const a = Math.sin(Math.PI * t) * strength;
+    if (a <= 0.02) return;
+    paintCtx.fillStyle = `rgba(168,133,63,${a * 0.9})`;
+    paintCtx.beginPath();
+    paintCtx.arc(x, y, 1.4 + 1.6 * strength, 0, 6.3);
+    paintCtx.fill();
+  });
+}
+
+// ножиците по ръбовете: вървят по линията и "разрязват" секцията
+const cuts = [...document.querySelectorAll('.cut')].map((el) => ({
+  el,
+  scissors: el.querySelector('.cut-scissors'),
+  line: el.querySelector('.cut-line')
+}));
+
+function drawCuts(vh) {
+  cuts.forEach(({ el, scissors, line }) => {
+    const r = el.getBoundingClientRect();
+    if (r.top < -60 || r.top > vh + 60) return;
+    const prog = clamp(1 - r.top / vh, 0, 1);
+    scissors.style.left = `calc(${(prog * 108 - 4).toFixed(2)}% )`;
+    // линията се "срязва": изрязаната част изчезва след ножицата
+    line.style.clipPath = `inset(0 0 0 ${(prog * 108 - 4).toFixed(2)}%)`;
+  });
+}
+
 /* ============ Скрол двигател ============ */
 
 const chaptersEl = document.querySelector('.chapters');
@@ -199,9 +322,7 @@ const bigLines = [...document.querySelectorAll('.bigtype .line')];
 let smooth = window.scrollY;
 let lastSmooth = smooth;
 
-function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
-
-function tick() {
+function tick(time) {
   const target = window.scrollY;
   smooth += (target - smooth) * 0.12;
   const vel = clamp(smooth - lastSmooth, -60, 60); // скорост на скрола
@@ -250,6 +371,10 @@ function tick() {
     el.style.transform = `translateY(${ty}px) rotate(${rot}deg)`;
     el.style.opacity = fade;
   });
+
+  // бои и искри между категориите + ножиците по ръбовете
+  drawPaint(global, time || 0);
+  drawCuts(vh);
 
   // голямата типография — редовете се разминават
   const bt = bigLines[0]?.closest('.bigtype');
