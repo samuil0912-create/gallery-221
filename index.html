@@ -4,206 +4,205 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Galerie 221 — Салон за красота</title>
-  <meta name="description" content="Galerie 221 — салон за красота: фризьорски услуги, маникюр, козметика и дерматология. Работим с Kevin Murphy, IBX, Wish Pro и Teoxane.">
+  <meta name="description" content="Galerie 221 — салон за красота: коса, нокти, козметика и дерматология. Kevin Murphy • IBX • Wish Pro • Teoxane.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@300;400;500;600;700&display=swap&subset=cyrillic" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" type="image/png" href="images/favicon.png">
 </head>
 <body>
 
-  <!-- Custom cursor (само за десктоп) -->
-  <div class="cursor-dot" aria-hidden="true"></div>
-  <div class="cursor-ring" aria-hidden="true"></div>
-
-  <!-- Лента за прогрес при скрол -->
-  <div class="scroll-progress" aria-hidden="true"></div>
-
-  <!-- ======= НАВИГАЦИЯ ======= -->
-  <header class="site-header" id="top">
-    <nav class="nav container">
-      <a href="#top" class="logo">
-        <span class="logo-badge"><img class="logo-mark" src="images/logo-mark.png" alt=""></span>
-        <span class="logo-text">Galerie <span>221</span></span>
-      </a>
-      <button class="nav-toggle" aria-label="Меню" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
-      <ul class="nav-links">
-        <li><a href="#nachalo">Начало</a></li>
-        <li><a href="#uslugi">Услуги</a></li>
-        <li><a href="#produkti">Продукти</a></li>
-        <li><a href="#za-nas">За нас</a></li>
-        <li><a href="#kontakti">Контакти</a></li>
-        <li><a href="#kontakti" class="btn btn-small">Запази час</a></li>
-      </ul>
-    </nav>
+  <!-- ======= ГОРНА ЛЕНТА ======= -->
+  <header class="bar">
+    <a href="#top" class="bar-logo">
+      <img src="images/logo-mark.png" alt="">
+      <span>GALERIE&nbsp;221<em>®</em></span>
+    </a>
+    <div class="bar-note mono">САЛОН ЗА КРАСОТА ✳ КОСА / НОКТИ / КОЗМЕТИКА / ДЕРМАТОЛОГИЯ</div>
+    <button class="menu-btn mono" aria-expanded="false" aria-controls="menu">
+      <span class="menu-btn-label">МЕНЮ</span>
+      <span class="menu-btn-icon" aria-hidden="true"><i></i><i></i></span>
+    </button>
   </header>
 
-  <!-- ======= НАЧАЛО / HERO ======= -->
-  <section class="hero" id="nachalo">
-    <canvas id="particles" aria-hidden="true"></canvas>
-    <div class="hero-side hero-side-left" aria-hidden="true">салон за красота</div>
-    <div class="hero-side hero-side-right" aria-hidden="true">коса • нокти • козметика • дерматология</div>
-    <div class="hero-inner container">
-      <p class="hero-eyebrow reveal">Салон за красота</p>
-      <h1 class="split-letters" data-text="Galerie 221">Galerie 221</h1>
-      <p class="hero-sub reveal delay-1">Изкуството да изглеждате безупречно.<br>
-      Коса, нокти, козметика и дерматология — на едно място.</p>
+  <!-- ======= ПОПЪП МЕНЮ (горе вдясно) ======= -->
+  <nav class="menu" id="menu" aria-hidden="true">
+    <div class="menu-head mono">
+      <span>GALERIE 221 ®</span>
+      <span>НАВИГАЦИЯ</span>
     </div>
-    <a href="#uslugi" class="scroll-hint" aria-label="Надолу">
-      <span></span>
-    </a>
-  </section>
-
-  <!-- ======= МАРКИ — ДВИЖЕЩА СЕ ЛЕНТА ======= -->
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee-track">
-      <span>Kevin Murphy</span><i>✦</i><span>IBX</span><i>✦</i><span>Wish Pro</span><i>✦</i><span>Teoxane</span><i>✦</i>
-      <span>Kevin Murphy</span><i>✦</i><span>IBX</span><i>✦</i><span>Wish Pro</span><i>✦</i><span>Teoxane</span><i>✦</i>
+    <ul class="menu-list">
+      <li><button class="menu-link" data-goto="#top"><span class="mono">01</span>Начало</button></li>
+      <li><button class="menu-link" data-goto="#produkti"><span class="mono">02</span>Продукти</button></li>
+      <li><button class="menu-link" data-page="page-uslugi"><span class="mono">03</span>Услуги</button></li>
+      <li><button class="menu-link" data-page="page-zanas"><span class="mono">04</span>За нас</button></li>
+      <li><button class="menu-link" data-page="page-kontakti"><span class="mono">05</span>Контакти</button></li>
+    </ul>
+    <div class="menu-foot mono">
+      <span>СОФИЯ, БЪЛГАРИЯ</span>
+      <a href="tel:+359000000000">+359 00 000 0000</a>
     </div>
-  </div>
+  </nav>
+  <div class="menu-veil" hidden></div>
 
-  <!-- ======= УСЛУГИ ======= -->
-  <section class="section" id="uslugi">
-    <div class="container">
-      <p class="section-eyebrow reveal">Какво предлагаме</p>
-      <h2 class="section-title title-mask">Нашите услуги</h2>
-      <div class="services-grid">
-
-        <article class="service-card reveal">
-          <div class="service-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
-          </div>
-          <h3>Фризьорски услуги</h3>
-          <p>Подстригване, боядисване, балеаж и официални прически. Нашите стилисти работят с продуктите на <strong>Kevin Murphy</strong>.</p>
+  <!-- ======= СТРАНИЦИ-ПАНЕЛИ ======= -->
+  <section class="page" id="page-uslugi" aria-hidden="true">
+    <div class="page-inner">
+      <header class="page-head">
+        <span class="mono">03 / УСЛУГИ</span>
+        <button class="page-close mono" aria-label="Затвори">ЗАТВОРИ ✕</button>
+      </header>
+      <h2 class="page-title">Услуги</h2>
+      <div class="page-grid">
+        <article>
+          <h3><span class="mono">#01</span> Фризьорски услуги</h3>
+          <p>Подстригване, боядисване, балеаж, официални прически и терапии за коса. Стилистите ни работят с Kevin Murphy.</p>
         </article>
-
-        <article class="service-card reveal delay-1">
-          <div class="service-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6v5H9z"/><path d="M8 7h8l1 4v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-9l1-4z"/><line x1="12" y1="14" x2="12" y2="18"/></svg>
-          </div>
-          <h3>Маникюр и педикюр</h3>
-          <p>Перфектни и здрави нокти. Нашите маникюристки укрепват естествения нокът със системата <strong>IBX</strong>.</p>
+        <article>
+          <h3><span class="mono">#02</span> Маникюр и педикюр</h3>
+          <p>Класически и гел маникюр, СПА педикюр, укрепване с IBX системата — здрави нокти отвътре.</p>
         </article>
-
-        <article class="service-card reveal delay-2">
-          <div class="service-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21C7 21 3 17 3 12c6 0 9-3 9-9 0 6 3 9 9 9 0 5-4 9-9 9z"/><path d="M12 21c0-5 2-8 6-10"/></svg>
-          </div>
-          <h3>Козметични процедури</h3>
-          <p>Терапии за лице с апаратната технология <strong>Wish Pro</strong> — магнитна инфузия за видими резултати още след първата процедура.</p>
+        <article>
+          <h3><span class="mono">#03</span> Козметични процедури</h3>
+          <p>Терапии за лице с Wish Pro — магнитна инфузия без игли, с видим ефект още след първата процедура.</p>
         </article>
-
-        <article class="service-card reveal delay-3">
-          <div class="service-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 3-2 5-2 8H7c0-3-2-5-2-8a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="10" y1="23" x2="14" y2="23"/></svg>
-          </div>
-          <h3>Дерматология</h3>
-          <p>Консултации и естетични процедури от нашата дерматоложка, която работи с швейцарската марка <strong>Teoxane</strong>.</p>
+        <article>
+          <h3><span class="mono">#04</span> Дерматология</h3>
+          <p>Консултации и естетични процедури от нашата дерматоложка с швейцарската марка Teoxane.</p>
         </article>
-
       </div>
     </div>
   </section>
 
-  <!-- ======= ПРОДУКТИ ======= -->
-  <section class="section section-products" id="produkti">
-    <div class="container">
-      <p class="section-eyebrow reveal">С какво работим</p>
-      <h2 class="section-title title-mask">Нашите продукти</h2>
-      <p class="section-note reveal">Всеки специалист в Galerie 221 работи с марката, на която вярва.</p>
-
-      <!-- Превключвател на марки -->
-      <div class="brand-tabs reveal" role="tablist" aria-label="Марки">
-        <button class="brand-tab active" data-brand="km" role="tab" aria-selected="true">Kevin Murphy</button>
-        <button class="brand-tab" data-brand="ibx" role="tab" aria-selected="false">IBX</button>
-        <button class="brand-tab" data-brand="wishpro" role="tab" aria-selected="false">Wish Pro</button>
-        <button class="brand-tab" data-brand="teoxane" role="tab" aria-selected="false">Teoxane</button>
-      </div>
-
-      <!-- 3D орбита: продуктите се въртят около вертикалното име на марката -->
-      <div class="orbit-stage reveal">
-        <div class="orbit-name" id="orbitName" aria-hidden="true">KEVIN MURPHY</div>
-        <div class="orbit" id="orbit"></div>
-      </div>
-
-      <!-- Описание на марката -->
-      <div class="brand-info reveal" id="brandInfo">
-        <!-- попълва се от script.js -->
-      </div>
-      <!-- TODO: заменете SVG плейсхолдърите с реални снимки на продуктите,
-           като добавите изображения в script.js (поле image на всеки продукт) -->
-    </div>
-  </section>
-
-  <!-- ======= ЗА НАС ======= -->
-  <section class="section" id="za-nas">
-    <div class="container about">
-      <div class="about-text">
-        <p class="section-eyebrow reveal">Кои сме ние</p>
-        <h2 class="section-title left title-mask">За Galerie 221</h2>
-        <p class="reveal">Galerie 221 е много повече от фризьорски салон. Нашият екип обединява стилисти, маникюристки, козметичка и дерматоложка, които споделят една обща страст — да ви накарат да се почувствате красиви и уверени.</p>
-        <p class="reveal delay-1">Работим само с професионални продукти — Kevin Murphy, IBX, Wish Pro и Teoxane — следим най-новите тенденции и подхождаме индивидуално към всеки клиент.</p>
-        <div class="about-stats reveal delay-2">
-          <div><strong>4&nbsp;в&nbsp;1</strong><span>коса • нокти • козметика • дерматология</span></div>
-          <div><strong>100%</strong><span>професионални продукти</span></div>
-        </div>
-      </div>
-      <div class="about-visual reveal" aria-hidden="true">
-        <div class="about-ring"></div>
-        <div class="about-ring r2"></div>
-        <span class="about-mark">✦</span>
+  <section class="page" id="page-zanas" aria-hidden="true">
+    <div class="page-inner">
+      <header class="page-head">
+        <span class="mono">04 / ЗА НАС</span>
+        <button class="page-close mono" aria-label="Затвори">ЗАТВОРИ ✕</button>
+      </header>
+      <h2 class="page-title">За Galerie 221</h2>
+      <div class="page-prose">
+        <p>Galerie 221 е много повече от фризьорски салон. Екипът ни обединява стилисти, маникюристки, козметичка и дерматоложка — под един покрив, с една обща страст: да ви накараме да се почувствате красиви и уверени.</p>
+        <p>Работим само с професионални продукти — Kevin Murphy, IBX, Wish Pro и Teoxane — следим тенденциите и подхождаме индивидуално към всеки клиент.</p>
+        <p class="mono page-stats">4 В 1 ✳ КОСА • НОКТИ • КОЗМЕТИКА • ДЕРМАТОЛОГИЯ ✳ 100% ПРОФЕСИОНАЛНИ ПРОДУКТИ</p>
       </div>
     </div>
   </section>
 
-  <!-- ======= КОНТАКТИ ======= -->
-  <section class="section section-alt" id="kontakti">
-    <div class="container">
-      <p class="section-eyebrow reveal">Очакваме ви</p>
-      <h2 class="section-title title-mask">Контакти и запазване на час</h2>
-      <div class="contact-grid">
-        <div class="contact-card reveal">
-          <h3>Адрес</h3>
-          <!-- TODO: заменете с реалния адрес -->
+  <section class="page" id="page-kontakti" aria-hidden="true">
+    <div class="page-inner">
+      <header class="page-head">
+        <span class="mono">05 / КОНТАКТИ</span>
+        <button class="page-close mono" aria-label="Затвори">ЗАТВОРИ ✕</button>
+      </header>
+      <h2 class="page-title">Контакти</h2>
+      <div class="page-grid">
+        <article>
+          <h3><span class="mono">АДРЕС</span></h3>
+          <!-- TODO: реалният адрес -->
           <p>ул. „Примерна“ 221<br>София, България</p>
-        </div>
-        <div class="contact-card reveal delay-1">
-          <h3>Телефон</h3>
-          <!-- TODO: заменете с реалния телефон -->
-          <p><a href="tel:+359000000000">+359 00 000 0000</a></p>
-          <p class="muted">Обадете се, за да запазите час</p>
-        </div>
-        <div class="contact-card reveal delay-2">
-          <h3>Работно време</h3>
-          <p>Понеделник – Петък: 9:00 – 19:00<br>
-          Събота: 9:00 – 16:00<br>
-          Неделя: почивен ден</p>
-        </div>
-        <div class="contact-card reveal delay-3">
-          <h3>Последвайте ни</h3>
-          <!-- TODO: заменете # с реалните линкове -->
-          <p class="socials">
-            <a href="#" aria-label="Instagram">Instagram</a>
-            <a href="#" aria-label="Facebook">Facebook</a>
-          </p>
-        </div>
+        </article>
+        <article>
+          <h3><span class="mono">ТЕЛЕФОН</span></h3>
+          <!-- TODO: реалният телефон -->
+          <p><a href="tel:+359000000000">+359 00 000 0000</a><br>Обадете се, за да запазите час</p>
+        </article>
+        <article>
+          <h3><span class="mono">РАБОТНО ВРЕМЕ</span></h3>
+          <p>Пон – Пет: 9:00 – 19:00<br>Събота: 9:00 – 16:00<br>Неделя: почивен ден</p>
+        </article>
+        <article>
+          <h3><span class="mono">СОЦИАЛНИ</span></h3>
+          <!-- TODO: реалните линкове -->
+          <p><a href="#">Instagram ↗</a><br><a href="#">Facebook ↗</a></p>
+        </article>
       </div>
     </div>
   </section>
 
-  <!-- ======= ФУТЪР ======= -->
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <a href="#top" class="logo">
-        <span class="logo-badge"><img class="logo-mark" src="images/logo-mark.png" alt=""></span>
-        <span class="logo-text">Galerie <span>221</span></span>
-      </a>
-      <p>© <span id="year"></span> Galerie 221. Всички права запазени.</p>
+  <main id="top">
+
+    <!-- ======= HERO: продукти падат и се носят около централния текст ======= -->
+    <section class="hero" id="nachalo">
+      <div class="hero-floaters" aria-hidden="true">
+        <div class="floater" data-depth="0.9" style="--fx:8%;  --fy:12%; --fr:-14deg; --fd:0s"><img src="images/km-hydrate-me-wash.png" alt=""></div>
+        <div class="floater" data-depth="0.5" style="--fx:78%; --fy:8%;  --fr:11deg;  --fd:.15s"><img src="images/km-plumping-rinse.png" alt=""></div>
+        <div class="floater" data-depth="0.7" style="--fx:86%; --fy:58%; --fr:-8deg;  --fd:.3s"><img src="images/km-young-again.png" alt=""></div>
+        <div class="floater" data-depth="0.4" style="--fx:4%;  --fy:62%; --fr:16deg;  --fd:.45s"><img src="images/km-blonde-angel.png" alt=""></div>
+        <div class="floater" data-depth="0.6" style="--fx:66%; --fy:78%; --fr:-19deg; --fd:.6s"><img src="images/km-body-mass.png" alt=""></div>
+        <div class="floater" data-depth="0.8" style="--fx:24%; --fy:80%; --fr:9deg;   --fd:.75s"><img src="images/km-maxi-wash.png" alt=""></div>
+      </div>
+      <div class="hero-center">
+        <img class="hero-logo" src="images/logo-full.png" alt="Galerie 221">
+        <p class="hero-statement mono">
+          ® GALERIE 221 Е САЛОН ЗА КРАСОТА, СЪБРАЛ <b>КОСА</b> ✂ <b>НОКТИ</b> ✳ <b>КОЗМЕТИКА</b> ⊕ <b>ДЕРМАТОЛОГИЯ</b> НА ЕДНО МЯСТО — ЗА ХОРА, КОИТО ИСКАТ ПОВЕЧЕ ОТ ОБИЧАЙНОТО.
+        </p>
+        <p class="hero-hint mono">СКРОЛНИ НАДОЛУ ↓</p>
+      </div>
+      <div class="edge edge-l mono" aria-hidden="true">АВТЕНТИЧНА КРАСОТА — БЕЗ КОМПРОМИСИ</div>
+      <div class="edge edge-r mono" aria-hidden="true">GALERIE 221 ® СОФИЯ — САЛОН ЗА КРАСОТА</div>
+    </section>
+
+    <!-- ======= ПРОДУКТИ: 4 глави, централно описание + летящи продукти ======= -->
+    <div class="chapters" id="produkti">
+      <div class="stage">
+        <!-- централното описание — едно и също място за всички марки -->
+        <div class="center">
+          <div class="center-desc mono" data-ch="0">
+            <span class="center-tag">#01 — КОСА</span>
+            <p>ФРИЗЬОРИТЕ НА GALERIE 221 РАБОТЯТ С <b>KEVIN.MURPHY</b> ✂ АВСТРАЛИЙСКА ПРОФЕСИОНАЛНА КОЗМЕТИКА С НАТУРАЛНИ СЪСТАВКИ, БЕЗ СУЛФАТИ И ПАРАБЕНИ — ЗА КОСА ИЗВЪН НОРМАТА.</p>
+          </div>
+          <div class="center-desc mono" data-ch="1">
+            <span class="center-tag">#02 — НОКТИ</span>
+            <p>МАНИКЮРИСТКИТЕ УКРЕПВАТ НОКТИТЕ ОТВЪТРЕ С <b>IBX</b> ✳ ПЪРВАТА СИСТЕМА, КОЯТО РАБОТИ В САМАТА НОКЪТНА ПЛОЧКА, А НЕ ВЪРХУ НЕЯ.</p>
+          </div>
+          <div class="center-desc mono" data-ch="2">
+            <span class="center-tag">#03 — КОЗМЕТИКА</span>
+            <p>КОЗМЕТИЧКАТА ВНАСЯ АКТИВНИТЕ СЪСТАВКИ ДЪЛБОКО В КОЖАТА С <b>WISH PRO</b> ⊕ МАГНИТНА ИНФУЗИЯ — БЕЗ ИГЛИ, БЕЗ ВЪЗСТАНОВИТЕЛЕН ПЕРИОД.</p>
+          </div>
+          <div class="center-desc mono" data-ch="3">
+            <span class="center-tag">#04 — ДЕРМАТОЛОГИЯ</span>
+            <p>ДЕРМАТОЛОЖКАТА ЗАЛАГА НА <b>TEOXANE</b> ✳ ШВЕЙЦАРСКА ПРЕЦИЗНОСТ И ХИАЛУРОНОВА КИСЕЛИНА — ГРИЖА ЗА КОЖАТА НА МЕДИЦИНСКО НИВО.</p>
+          </div>
+        </div>
+        <!-- продуктите се пълнят от script.js -->
+        <div class="stage-floaters" aria-hidden="true"></div>
+        <div class="edge edge-l mono" aria-hidden="true">КОНСУМИРАЙ ОТГОВОРНО — ПРОФЕСИОНАЛНИ ПРОДУКТИ</div>
+        <div class="edge edge-r mono" aria-hidden="true">KEVIN MURPHY • IBX • WISH PRO • TEOXANE</div>
+        <div class="stage-count mono" aria-hidden="true"><b id="chNum">01</b> / 04</div>
+        <div class="barcode" aria-hidden="true"></div>
+      </div>
     </div>
-  </footer>
+
+    <!-- ======= ГОЛЯМА ТИПОГРАФИЯ ======= -->
+    <section class="bigtype">
+      <p class="mono bigtype-eyebrow">✳ ORIGINAL SATISFACTION</p>
+      <h2 aria-label="Красотата, в която вярваме">
+        <span class="line" data-speed="0.6">КРАСОТАТА,</span>
+        <span class="line line-ghost" data-speed="1.4">В КОЯТО</span>
+        <span class="line" data-speed="0.9">ВЯРВАМЕ</span>
+      </h2>
+      <p class="bigtype-note">Коса. Нокти. Кожа. Един салон, четири занаята — и професионални продукти, на които вярваме безрезервно.</p>
+    </section>
+
+    <!-- ======= ФУТЪР ======= -->
+    <footer class="foot">
+      <div class="foot-row">
+        <img src="images/logo-mark.png" alt="" class="foot-mark">
+        <div class="foot-links mono">
+          <button data-page="page-uslugi">УСЛУГИ ↗</button>
+          <button data-page="page-zanas">ЗА НАС ↗</button>
+          <button data-page="page-kontakti">КОНТАКТИ ↗</button>
+        </div>
+      </div>
+      <div class="foot-row mono foot-legal">
+        <span>© <span id="year"></span> GALERIE 221 ® ВСИЧКИ ПРАВА ЗАПАЗЕНИ</span>
+        <span>СОФИЯ, БЪЛГАРИЯ ✳ 42.6977° N, 23.3219° E</span>
+      </div>
+    </footer>
+
+  </main>
 
   <script src="script.js"></script>
 </body>
