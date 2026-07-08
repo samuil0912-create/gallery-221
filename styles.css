@@ -277,12 +277,52 @@ body.menu-open .menu { opacity: 1; transform: none; pointer-events: auto; }
   text-align: center;
 }
 
-.hero-logo {
-  height: clamp(180px, 30vh, 280px);
-  width: auto;
-  margin: 0 auto 2rem;
-  /* тъмна версия на златното лого върху светла хартия */
-  filter: brightness(0.62) saturate(1.4) contrast(1.1);
+/* ============ Надписът Galerie 221 — живи букви ============ */
+
+.hero-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(3.2rem, 11vw, 8.4rem);
+  line-height: 1.05;
+  margin-bottom: 2.4rem;
+  white-space: nowrap;
+  will-change: filter;
+}
+
+.hero-title .hl {
+  display: inline-block;
+  will-change: transform;
+  /* влизане: буквите падат една по една */
+  animation: hlIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--i) * 65ms + 0.2s);
+}
+
+@keyframes hlIn {
+  from { opacity: 0; transform: translateY(-1.15em) rotate(10deg); }
+  to { opacity: 1; }
+}
+
+.hero-title .hl.gold { color: var(--gold); font-style: italic; }
+
+/* постоянното "дишане" на всяка буква — различна фаза и период */
+.hero-title .hli {
+  display: inline-block;
+  animation: hlIdle var(--hd, 3.4s) ease-in-out infinite alternate var(--hp, 0s);
+}
+
+@keyframes hlIdle {
+  from { transform: translateY(-0.05em) rotate(-2.2deg); }
+  to { transform: translateY(0.05em) rotate(2.2deg); }
+}
+
+/* горният надпис също диша постоянно, буква по буква */
+.bar-logo .bl {
+  display: inline-block;
+  animation: blWave 2.6s ease-in-out infinite calc(var(--i) * -0.16s);
+}
+
+@keyframes blWave {
+  0%, 100% { transform: translateY(0.8px); }
+  50% { transform: translateY(-1.1px); }
 }
 
 .hero-statement {
@@ -496,7 +536,13 @@ body.menu-open .menu { opacity: 1; transform: none; pointer-events: auto; }
   flex-wrap: wrap;
 }
 
-.foot-mark { height: 52px; width: auto; filter: brightness(0.62) saturate(1.4); }
+.foot-word {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.foot-word b { color: var(--gold); font-style: italic; }
 
 .foot-links { display: flex; gap: 1.6rem; }
 

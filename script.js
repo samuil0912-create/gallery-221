@@ -131,6 +131,54 @@ CHAPTERS.forEach((chapter, ci) => {
   });
 });
 
+/* ============ Живите букви на Galerie 221 ============ */
+
+const heroTitle = document.querySelector('.hero-title');
+const titleLetters = []; // { el, d, dir }
+
+if (heroTitle) {
+  const text = heroTitle.dataset.text || heroTitle.textContent;
+  heroTitle.textContent = '';
+  [...text].forEach((ch, i) => {
+    const outer = document.createElement('span');
+    outer.className = 'hl' + (/\d/.test(ch) ? ' gold' : '');
+    outer.style.setProperty('--i', i);
+    const inner = document.createElement('span');
+    inner.className = 'hli';
+    inner.style.setProperty('--hd', (2.8 + ((i * 37) % 17) / 10) + 's');
+    inner.style.setProperty('--hp', (-((i * 53) % 27) / 10) + 's');
+    inner.textContent = ch === ' ' ? ' ' : ch;
+    outer.appendChild(inner);
+    heroTitle.appendChild(outer);
+    titleLetters.push({
+      el: outer,
+      d: 0.35 + ((i * 7) % 10) / 10 * 0.65, // "дълбочина" на буквата
+      dir: i % 2 ? 1 : -1
+    });
+  });
+}
+
+/* Надписът горе вляво — постоянна вълна буква по буква */
+const barSpan = document.querySelector('.bar-logo > span');
+if (barSpan) {
+  const nodes = [...barSpan.childNodes];
+  barSpan.textContent = '';
+  let bi = 0;
+  nodes.forEach((n) => {
+    if (n.nodeType === Node.TEXT_NODE) {
+      [...n.textContent].forEach((ch) => {
+        const s = document.createElement('span');
+        s.className = 'bl';
+        s.style.setProperty('--i', bi++);
+        s.textContent = ch;
+        barSpan.appendChild(s);
+      });
+    } else {
+      barSpan.appendChild(n); // ® остава както е
+    }
+  });
+}
+
 /* Обвий hero продуктите в .drift за постоянното плуване */
 document.querySelectorAll('.hero-floaters .floater').forEach((el, i) => {
   const wrap = document.createElement('div');
@@ -167,6 +215,20 @@ function tick() {
       `translateY(${-smooth * d * 0.5}px) rotate(${vel * d * 0.25}deg)`;
   });
 
+  // буквите на Galerie 221: при скрол се пръскат и завъртат по "дълбочина",
+  // а бързият скрол добавя кинематографичен motion blur
+  if (heroTitle && smooth < vh * 1.4) {
+    const sy = Math.min(smooth, vh);
+    titleLetters.forEach(({ el, d, dir }) => {
+      const ty = vel * d * 2.6 - sy * d * 0.34;
+      const tx = vel * dir * d * 1.1 + sy * dir * d * 0.1;
+      const rot = vel * d * 0.55 * dir - sy * dir * d * 0.012;
+      el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
+    });
+    const blur = Math.min(7, Math.abs(vel) * 0.09);
+    heroTitle.style.filter = blur > 0.4 ? `blur(${blur.toFixed(2)}px)` : '';
+  }
+
   // главите с продукти
   const top = chaptersEl.offsetTop;
   const span = chaptersEl.offsetHeight - vh;
@@ -175,7 +237,7 @@ function tick() {
   const ch = Math.floor(global);
   const local = global - ch; // 0..1 в рамките на главата
 
-  descs.forEach((d) => d.classList.toggle('on', +d.dataset.ch === ch && local > 0.12 && local < 0.88));
+  descs.forEach((d) => d.classList.toggle('on', +d.dataset.ch === ch && local > 0.05 && local < 0.92));
   chNum.textContent = String(ch + 1).padStart(2, '0');
 
   stageItems.forEach(({ el, ch: ici, cfg }) => {
@@ -184,7 +246,7 @@ function tick() {
     const travel = local - 0.5; // -0.5 → 0.5
     const ty = -travel * vh * 1.25 * cfg.d + vel * cfg.d * 1.6;
     const rot = travel * 42 * cfg.d + vel * cfg.d * 0.35;
-    const fade = 1 - clamp((Math.abs(travel) - 0.3) / 0.2, 0, 1);
+    const fade = 1 - clamp((Math.abs(travel) - 0.36) / 0.14, 0, 1);
     el.style.transform = `translateY(${ty}px) rotate(${rot}deg)`;
     el.style.opacity = fade;
   });
