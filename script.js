@@ -296,40 +296,54 @@ function drawPaint(global, time) {
 /* ============ Скрол двигател ============ */
 
 const chaptersEl = document.querySelector('.chapters');
+const heroSection = document.querySelector('.hero');
+const heroCenter = document.querySelector('.hero-center');
 const descs = [...document.querySelectorAll('.center-desc')];
+const words = [...document.querySelectorAll('.stage-word .sw')];
 const chNum = document.getElementById('chNum');
 const heroFloaters = [...document.querySelectorAll('.hero-floaters .floater')];
 const bigLines = [...document.querySelectorAll('.bigtype .line')];
 
 let smooth = window.scrollY;
 let lastSmooth = smooth;
+let velSmooth = 0;
 
 function tick(time) {
   const target = window.scrollY;
-  smooth += (target - smooth) * 0.12;
-  const vel = clamp(smooth - lastSmooth, -60, 60); // скорост на скрола
+  smooth += (target - smooth) * 0.1;
+  const rawVel = clamp(smooth - lastSmooth, -90, 90); // скорост на скрола
+  velSmooth += (rawVel - velSmooth) * 0.2;
+  const vel = velSmooth;
   lastSmooth = smooth;
   const vh = window.innerHeight;
 
-  // hero продуктите се разлитат нагоре при скрол
+  // hero продуктите се разлитат нагоре при скрол — по-тежко, със завъртане и мащаб
   heroFloaters.forEach((el) => {
     const d = parseFloat(el.dataset.depth);
+    const sc = 1 + Math.min(smooth, vh) / vh * d * 0.5;
     el.style.transform =
-      `translateY(${-smooth * d * 0.5}px) rotate(${vel * d * 0.25}deg)`;
+      `translateY(${-smooth * d * 0.85}px) rotate(${vel * d * 0.8}deg) scale(${sc.toFixed(3)})`;
   });
 
-  // буквите на Galerie 221: при скрол се пръскат и завъртат по "дълбочина",
-  // а бързият скрол добавя кинематографичен motion blur
+  // hero: кинематографичен push-in — целият блок се приближава, размива и избледнява
+  if (heroCenter && smooth < vh * 1.5) {
+    const z = clamp(smooth / vh, 0, 1);
+    const zoom = 1 + z * 0.55;
+    heroCenter.style.transform = `scale(${zoom.toFixed(3)}) translateY(${(-z * 40).toFixed(1)}px)`;
+    heroCenter.style.opacity = (1 - z * 0.9).toFixed(3);
+    const heroBlur = z * 6 + Math.abs(vel) * 0.05;
+    heroCenter.style.filter = heroBlur > 0.4 ? `blur(${heroBlur.toFixed(2)}px)` : '';
+  }
+
+  // буквите на Galerie 221: при скрол се пръскат много по-силно, с motion blur
   if (heroTitle && smooth < vh * 1.4) {
     const sy = Math.min(smooth, vh);
     titleLetters.forEach(({ el, d, dir }) => {
-      const ty = vel * d * 2.6 - sy * d * 0.34;
-      const tx = vel * dir * d * 1.1 + sy * dir * d * 0.1;
-      const rot = vel * d * 0.55 * dir - sy * dir * d * 0.012;
-      el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
+      const ty = vel * d * 4.2 - sy * d * 0.55;
+      const tx = vel * dir * d * 2.2 + sy * dir * d * 0.18;
+      const rot = vel * d * 1.1 * dir - sy * dir * d * 0.022;
+      el.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
     });
-    const blur = Math.min(7, Math.abs(vel) * 0.09);
-    heroTitle.style.filter = blur > 0.4 ? `blur(${blur.toFixed(2)}px)` : '';
   }
 
   // главите с продукти
@@ -343,28 +357,47 @@ function tick(time) {
   descs.forEach((d) => d.classList.toggle('on', +d.dataset.ch === ch && local > 0.05 && local < 0.92));
   chNum.textContent = String(ch + 1).padStart(2, '0');
 
+  // гигантското име на марката минава хоризонтално през сцената
+  const inChapters = smooth > top - vh && smooth < top + chaptersEl.offsetHeight;
+  words.forEach((w) => {
+    const wc = +w.dataset.ch;
+    if (wc !== ch || !inChapters) { w.style.opacity = '0'; return; }
+    const travel = local - 0.5; // -0.5 → 0.5
+    const wx = -travel * (window.innerWidth * 1.35);
+    const fade = 1 - clamp((Math.abs(travel) - 0.34) / 0.16, 0, 1);
+    w.style.opacity = (fade * 0.9).toFixed(3);
+    w.style.transform = `translateX(${wx.toFixed(0)}px) scale(${(1 + Math.abs(travel) * 0.12).toFixed(3)})`;
+  });
+
+  // продуктите: по-голямо пътуване, 3D наклон и мащаб, силна реакция на скорост
   stageItems.forEach(({ el, ch: ici, cfg }) => {
-    if (ici !== ch) { el.classList.remove('live'); return; }
+    if (ici !== ch || !inChapters) {
+      if (el.classList.contains('live')) { el.classList.remove('live'); el.style.opacity = '0'; }
+      return;
+    }
     el.classList.add('live');
     const travel = local - 0.5; // -0.5 → 0.5
-    const ty = -travel * vh * 1.25 * cfg.d + vel * cfg.d * 1.6;
-    const rot = travel * 42 * cfg.d + vel * cfg.d * 0.35;
+    const ty = -travel * vh * 1.9 * cfg.d + vel * cfg.d * 3.2;
+    const tx = vel * cfg.d * 1.4;
+    const rot = travel * 60 * cfg.d + vel * cfg.d * 0.7;
+    const sc = 1 + (0.4 - Math.abs(travel)) * 0.7 * cfg.d;
     const fade = 1 - clamp((Math.abs(travel) - 0.36) / 0.14, 0, 1);
-    el.style.transform = `translateY(${ty}px) rotate(${rot}deg)`;
+    el.style.transform =
+      `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${Math.max(0.3, sc).toFixed(3)})`;
     el.style.opacity = fade;
   });
 
   // бои и искри между категориите
   drawPaint(global, time || 0);
 
-  // голямата типография — редовете се разминават
+  // голямата типография — редовете се разминават по-силно
   const bt = bigLines[0]?.closest('.bigtype');
   if (bt) {
     const r = bt.getBoundingClientRect();
     const off = r.top + r.height / 2 - vh / 2;
     bigLines.forEach((line) => {
       const s = parseFloat(line.dataset.speed) - 1;
-      line.style.transform = `translateY(${off * s * 0.22}px) translateX(${off * s * 0.06}px)`;
+      line.style.transform = `translateY(${(off * s * 0.4).toFixed(1)}px) translateX(${(off * s * 0.12).toFixed(1)}px)`;
     });
   }
 
@@ -377,6 +410,7 @@ if (!reduceMotion) {
   // без анимации: покажи първата глава статично
   descs[0].classList.add('on');
   stageItems.forEach(({ el, ch }) => el.classList.toggle('live', ch === 0));
+  if (words[0]) words[0].style.opacity = '0.5';
 }
 
 /* ============ Година ============ */

@@ -275,6 +275,7 @@ body.menu-open .menu { opacity: 1; transform: none; pointer-events: auto; }
   z-index: 4;
   max-width: 620px;
   text-align: center;
+  will-change: transform, opacity, filter;
 }
 
 /* ============ Надписът Galerie 221 — живи букви ============ */
@@ -411,6 +412,32 @@ body.menu-open .menu { opacity: 1; transform: none; pointer-events: auto; }
   background:
     radial-gradient(ellipse 60% 45% at 50% 50%, var(--paper-soft), transparent),
     var(--paper);
+}
+
+/* гигантското име на марката — преминава хоризонтално при скрол */
+.stage-word {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stage-word .sw {
+  grid-area: 1 / 1;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(6rem, 22vw, 20rem);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(23, 20, 15, 0.14);
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
 .center {
