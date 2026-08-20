@@ -1,0 +1,568 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><title>BTCUSDT Мулти-таймфрейм разчет</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600&family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#0C0F16; --panel:#141924; --panel-2:#101520; --line:#232A3A; --line-soft:#1A2130;
+  --ink:#ECE8E1; --ink-2:#B8BECC; --muted:#8A93A6;
+  --bull:#3FCF8E; --bear:#E5484D; --accent:#E8A33D; --accent-soft:rgba(232,163,61,.14);
+  --neutral:#6E86B8;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --disp:"Oswald","Arial Narrow",sans-serif;
+  --body:"Golos Text","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--body); font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px 96px}
+a{color:var(--accent)}
+
+/* ---------- tape ---------- */
+.tape{
+  position:sticky; top:0; z-index:20; background:rgba(12,15,22,.93);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+}
+.tape-in{max-width:1120px;margin:0 auto;padding:10px 24px;display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 22px}
+.tape .sym{font-family:var(--disp);font-weight:600;font-size:19px;letter-spacing:.06em}
+.tape .px{font-family:var(--mono);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums}
+.tape .chg{font-family:var(--mono);font-size:14px;padding:2px 8px;border-radius:3px}
+.up{color:var(--bull)} .down{color:var(--bear)}
+.chg.up{background:rgba(63,207,142,.12)} .chg.down{background:rgba(229,72,77,.12)}
+.tape .meta{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.02em}
+@media(max-width:560px){.tape-in{gap:6px 14px;padding:8px 20px}.tape .meta{font-size:10.5px}.tape .sym,.tape .px{font-size:16px}.tape .chg{font-size:12px}}
+
+/* ---------- header ---------- */
+header.hero{padding:56px 0 40px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--disp);font-weight:500;font-size:clamp(38px,6.5vw,68px);line-height:1.02;letter-spacing:.005em;margin:14px 0 0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--muted)}
+.dek{max-width:64ch;color:var(--ink-2);font-size:17.5px;margin-top:18px}
+
+/* ---------- sections ---------- */
+section{padding:52px 0;border-bottom:1px solid var(--line-soft)}
+h2{font-family:var(--disp);font-weight:500;font-size:30px;letter-spacing:.01em;margin:0 0 6px}
+h3{font-family:var(--disp);font-weight:500;font-size:21px;letter-spacing:.02em;margin:0 0 8px}
+.sub{color:var(--muted);font-size:14.5px;margin:0 0 26px;max-width:70ch}
+p{max-width:70ch}
+
+/* ---------- verdict ---------- */
+.verdict{display:grid;grid-template-columns:1.35fr 1fr;gap:28px;align-items:start}
+@media(max-width:820px){.verdict{grid-template-columns:1fr}}
+.verdict-body p{margin:0 0 14px}
+.verdict-body strong{color:var(--ink);font-weight:600}
+.callout{
+  border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:20px 22px;
+}
+.callout .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.bias-list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:0}
+.bias-list li{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid var(--line-soft)}
+.bias-list li:first-child{border-top:0}
+.tf{font-family:var(--mono);font-size:13px;color:var(--ink-2);letter-spacing:.06em}
+.chip{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:3px;white-space:nowrap}
+.chip.bull{color:var(--bull);background:rgba(63,207,142,.12);border:1px solid rgba(63,207,142,.3)}
+.chip.bear{color:var(--bear);background:rgba(229,72,77,.12);border:1px solid rgba(229,72,77,.3)}
+.chip.neu{color:var(--neutral);background:rgba(110,134,184,.12);border:1px solid rgba(110,134,184,.3)}
+.chip.warn{color:var(--accent);background:var(--accent-soft);border:1px solid rgba(232,163,61,.32)}
+
+/* ---------- table ---------- */
+.tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:var(--panel-2)}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:14px}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--panel)}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:0}
+td.tfc{font-family:var(--disp);font-size:17px;letter-spacing:.04em}
+
+/* ---------- chart blocks ---------- */
+.tfblock{border:1px solid var(--line);border-radius:4px;background:var(--panel-2);margin-bottom:26px;overflow:hidden}
+.tfhead{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:baseline;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line-soft);background:var(--panel)}
+.tfhead .name{font-family:var(--disp);font-size:22px;letter-spacing:.05em}
+.tfhead .name span{font-family:var(--body);font-size:13px;color:var(--muted);letter-spacing:0;margin-left:10px}
+.readout{display:flex;flex-wrap:wrap;gap:4px 18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.readout b{color:var(--ink-2);font-weight:500}
+.chart{position:relative;height:340px;padding:8px 6px 0}
+@media(max-width:640px){.chart{height:270px}}
+canvas{display:block;width:100%;height:100%}
+.tfnote{padding:16px 20px 20px;border-top:1px solid var(--line-soft);font-size:15px;color:var(--ink-2)}
+.tfnote p{margin:0;max-width:78ch}
+.legend{display:flex;flex-wrap:wrap;gap:14px;padding:0 20px 14px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:6px}
+
+/* ---------- levels ---------- */
+.ladder{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media(max-width:820px){.ladder{grid-template-columns:1fr}}
+.lvl{list-style:none;margin:12px 0 0;padding:0}
+.lvl li{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:10px 0;border-top:1px solid var(--line-soft)}
+.lvl .p{font-family:var(--mono);font-size:14.5px;font-variant-numeric:tabular-nums;font-weight:500}
+.lvl .why{font-size:14px;color:var(--muted)}
+.lvl .why b{color:var(--ink-2);font-weight:500}
+.res .p{color:var(--bear)} .sup .p{color:var(--bull)}
+.strength{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);border:1px solid var(--line);border-radius:2px;padding:1px 5px;margin-left:8px;vertical-align:1px}
+
+/* ---------- scenarios ---------- */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:900px){.cards{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:20px;display:flex;flex-direction:column;gap:12px}
+.card.base{border-top:2px solid var(--neutral)}
+.card.bullc{border-top:2px solid var(--bull)}
+.card.bearc{border-top:2px solid var(--bear)}
+.card .prob{font-family:var(--disp);font-size:34px;line-height:1;letter-spacing:.02em}
+.card h3{margin:0}
+.card dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13.5px}
+.card dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.card dd{margin:0;color:var(--ink-2)}
+.card dd .n{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* ---------- plan ---------- */
+.plan{display:flex;flex-direction:column;gap:0}
+.setup{display:grid;grid-template-columns:170px 1fr;gap:22px;padding:22px 0;border-top:1px solid var(--line-soft)}
+@media(max-width:720px){.setup{grid-template-columns:1fr;gap:10px}}
+.setup .side{font-family:var(--disp);font-size:19px;letter-spacing:.04em}
+.setup .side small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);margin-top:4px;text-transform:uppercase}
+.setup .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px 20px}
+.setup .cell .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.setup .cell .v{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;margin-top:2px}
+.setup .rationale{grid-column:1/-1;font-size:14.5px;color:var(--ink-2);max-width:78ch}
+
+/* ---------- risk / footer ---------- */
+.risk{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin-top:18px}
+.risk div{border-left:2px solid var(--accent);padding:2px 0 2px 16px}
+.risk .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.risk p{margin:6px 0 0;font-size:14.5px;color:var(--ink-2);max-width:46ch}
+footer{padding:34px 0 0;color:var(--muted);font-size:13px}
+footer p{max-width:78ch;margin:0 0 10px}
+footer .mono{font-family:var(--mono);font-size:12px}
+</style>
+<style>
+.num,span.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.warn{color:var(--accent)}
+canvas{cursor:crosshair}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="tape"><div class="tape-in">
+  <span class="sym">BTC/USDT</span>
+  <span class="px">69 766.5</span>
+  <span class="chg up">+8.47% / 24ч</span>
+  <span class="meta">24ч връх 70 064.2 · дъно 64 247.3</span>
+  <span class="meta">OKX spot · 20 авг. 2026, 07:06 UTC</span>
+</div></div>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Мулти-таймфрейм разчет · 1M / 1W / 1D / 4H / 1H / 15m</div>
+  <h1>Пробив в мечи пазар, <em>направен на един дъх</em></h1>
+  <p class="dek">За 48 часа BTC мина от 64 163 до 70 064 — първият по-висок връх на дневна база от май и първото затваряне над 200-дневната SMA от началото на низходящия тренд. Долните таймфреймове са в екстремна свръхкупеност, горните още не са обърнати. Ето къде точно се сблъскват.</p>
+</header>
+
+<section id="verdict">
+  <div class="verdict">
+    <div class="verdict-body">
+      <h2>Присъдата</h2>
+      <p class="sub">Едно изречение на всеки хоризонт, преди числата.</p>
+      <p><strong>Макро (1M/1W): още мечи, но за пръв път отслабващ.</strong> Месечната графика е серия от по-ниски върхове от 126 200 (окт. 2025) и цената стои дълбоко под месечната EMA20 (77 544). Седмичният MACD обаче е с втора поредна положителна хистограма (+930 срещу +467), RSI се вдига от 38.6 към 48.6, а тази седмица тече <span class="num">+10.5%</span> над седмичната EMA200 (68 914). Това е поведение на дъно във фаза на изграждане, не на подновен спад.</p>
+      <p><strong>Среден срок (1D/4H): силен тренд, но разтегнат до крайност.</strong> Дневният ADX е 37.4 с +DI 46.8 срещу -DI 7.3 — еднопосочен натиск. Цената е <strong>2.83 ATR над дневната EMA20</strong> и извън горната Болинджър лента (67 932), дневен RSI 75.1, StochRSI 99.8, 4H RSI 85.1. Обемът потвърждава (9 730 и 7 355 BTC срещу 20-дневна средна 4 084), така че това е истинска покупка, а не тънък фитил — но всяко влизане на пазарна цена тук плаща максималната премия.</p>
+      <p><strong>Краткосрочно (1H/15m): пауза, не обрат.</strong> Десет часа странично между 69 000 и 70 064, 1H MACD хистограма току-що мина под нулата (−33), 15m Болинджър лентите са свити до 1.32% ширина. Компресия под съпротива след импулс — статистически по-често продължение, но решението идва от посоката на пробива.</p>
+      <p><strong>Заключение:</strong> биковете държат инициативата, ала съотношението риск/възвръщаемост при 69 766 е лошо. Работната теза е <em>купуване на корекция</em> в 67 800–68 700, а не гонене; мечите сделки стават валидни едва при отказ от 70 000–70 330 с потвърждение на 4H.</p>
+    </div>
+    <aside class="callout">
+      <div class="k">Насока по таймфрейм</div>
+      <ul class="bias-list">
+        <li><span class="tf">1M · месечна</span><span class="chip bear">Мечи</span></li>
+        <li><span class="tf">1W · седмична</span><span class="chip neu">Неутрален ↗</span></li>
+        <li><span class="tf">1D · дневна</span><span class="chip bull">Бичи</span></li>
+        <li><span class="tf">4H</span><span class="chip warn">Бичи · прегрят</span></li>
+        <li><span class="tf">1H</span><span class="chip neu">Консолидация</span></li>
+        <li><span class="tf">15m</span><span class="chip warn">Squeeze</span></li>
+      </ul>
+      <div class="k" style="margin-top:22px">Позициониране</div>
+      <ul class="bias-list">
+        <li><span class="tf">Funding (перп)</span><span class="tf" style="color:var(--ink)">0.010% — базово</span></li>
+        <li><span class="tf">Long/Short акаунти</span><span class="tf" style="color:var(--ink)">1.05 (от 1.18)</span></li>
+        <li><span class="tf">Отворен интерес</span><span class="tf" style="color:var(--ink)">$2.22 млрд.</span></li>
+      </ul>
+      <p style="font-size:13.5px;color:var(--muted);margin:14px 0 0">Няма претоварване от лонгове — фондингът е на базовата ставка, а съотношението лонг/шорт <em>пада</em> по време на ръста. Ралито не е задвижено от ливъридж, което намалява риска от каскаден лонг-squeeze, но и означава, че горивото „болка за шортовете“ е ограничено.</p>
+    </aside>
+  </div>
+</section>
+
+<section id="matrix">
+  <h2>Матрицата</h2>
+  <p class="sub">Шест хоризонта, едни и същи индикатори. Разминаването между колоните „ADX/DI“ и „RSI“ е цялата история на този пазар в момента.</p>
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr>
+      <th>ТФ</th><th>Структура</th><th>Позиция спрямо EMA</th><th>RSI(14)</th><th>MACD хист.</th><th>ADX (+DI/−DI)</th><th>ATR%</th><th>Насока</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="tfc">1M</td><td>По-ниски върхове от 126 200; месецът +11.3%</td><td class="num">Под EMA20 77 544 · над EMA50 66 271</td><td class="num">47.0 ↗</td><td class="num down">−5 401 (свива се)</td><td class="num">28.7 (16.1 / 25.4)</td><td class="num">20.5%</td><td><span class="chip bear">Мечи</span></td></tr>
+      <tr><td class="tfc">1W</td><td>126 200 → 97 925 → 82 842; дъно 57 809</td><td class="num">Под EMA50 76 929 · над EMA200 68 914</td><td class="num">48.6 ↗</td><td class="num up">+930 (2-ра седмица)</td><td class="num">28.5 (22.7 / 18.5)</td><td class="num">7.2%</td><td><span class="chip neu">Обръщащ се</span></td></tr>
+      <tr><td class="tfc">1D</td><td>Пробит връх 66 955 → първи HH от май</td><td class="num">EMA9 &gt; 20 &gt; 50 · над SMA200 69 018</td><td class="num down">75.1 (свръхкупен)</td><td class="num up">+557 (разширява)</td><td class="num">37.4 (46.8 / 7.3)</td><td class="num">2.45%</td><td><span class="chip bull">Бичи</span></td></tr>
+      <tr><td class="tfc">4H</td><td>Импулс от 64 164 без корекция &gt;1%</td><td class="num">Пълен бичи стек · на горната BB 69 706</td><td class="num down">85.1 (екстремен)</td><td class="num up">+577</td><td class="num">59.5 (52.1 / 3.3)</td><td class="num">1.55%</td><td><span class="chip warn">Прегрят</span></td></tr>
+      <tr><td class="tfc">1H</td><td>Диапазон 69 000–70 064, ~10 часа</td><td class="num">Над EMA9 69 402 · над EMA20 68 492</td><td class="num">74.6 ↘</td><td class="num down">−33 (пресече надолу)</td><td class="num">68.4 (38.3 / 7.7)</td><td class="num">0.73%</td><td><span class="chip neu">Пауза</span></td></tr>
+      <tr><td class="tfc">15m</td><td>Компресия под 69 890</td><td class="num">Над EMA50 68 991 · над SMA50 69 283</td><td class="num">61.9</td><td class="num up">+22</td><td class="num">28.3 (37.6 / 13.8)</td><td class="num">0.26%</td><td><span class="chip warn">BB ширина 1.32%</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+<section id="charts">
+  <h2>Зумът навътре</h2>
+  <p class="sub">От месечната рамка към 15-минутната. Всяка графика носи EMA20/50/200, обем и нивата, които важат точно за този хоризонт. Курсорът показва OHLC на всяка свещ.</p>
+
+  <div class="tfblock">
+    <div class="tfhead">
+      <div class="name">1M <span>Месечна · контекстът, който още не е обърнат</span></div>
+      <div class="readout">RSI <b>47.0</b> · MACD хист. <b class="down">−5 401</b> · ADX <b>28.7</b> · ATR <b>20.5%</b></div>
+    </div>
+    <div class="chart"><canvas data-tf="1M"></canvas></div>
+    <div class="legend"><span><i style="background:#7E8AA6"></i>EMA20</span><span><i style="background:#E8A33D"></i>EMA50</span><span><i style="background:#9AA3B5"></i>EMA200</span><span><i style="background:#E8A33D;opacity:.5"></i>ключово ниво</span></div>
+    <div class="tfnote"><p>Цикличният връх 126 200 (окт. 2025) и низходящата серия след него остават в сила — за да се говори за нов бичи цикъл, нужен е месечен затвор над 82 842. Позитивното: август се движи <span class="num">+11.3%</span> и се стреми да затвори над юлската свещ, RSI се повдига от най-ниските нива за цикъла, а месечният StochRSI (8.8) е в зоната, от която исторически тръгват многомесечни отскоци. Месечната EMA50 на 66 271 сега е под цената — това е първата линия, която биковете трябва да задържат при затваряне.</p></div>
+  </div>
+
+  <div class="tfblock">
+    <div class="tfhead">
+      <div class="name">1W <span>Седмична · мястото, където се решава дали е дъно</span></div>
+      <div class="readout">RSI <b>48.6 ↗</b> · MACD хист. <b class="up">+930</b> · ADX <b>28.5</b> · EMA200 <b>68 914</b></div>
+    </div>
+    <div class="chart"><canvas data-tf="1W"></canvas></div>
+    <div class="legend"><span><i style="background:#7E8AA6"></i>EMA20</span><span><i style="background:#E8A33D"></i>EMA50</span><span><i style="background:#9AA3B5"></i>EMA200</span><span><i style="background:#E8A33D;opacity:.5"></i>ключово ниво</span></div>
+    <div class="tfnote"><p>Двойното дъно 60 000 (фев.) / 57 809 (юни) държи вече три месеца, а текущата свещ е най-силната от януари. Цената се бори точно на седмичната EMA200 (68 914) — <strong>седмичен затвор над нея</strong> е първото истинско техническо събитие от началото на спада. Над главата: SMA50 на 81 614 и структурният по-нисък връх 82 842 — до там нищо в седмичната картина не се променя фундаментално. MACD хистограмата расте втора седмица, което обикновено предхожда 4–8 седмици отскок.</p></div>
+  </div>
+
+  <div class="tfblock">
+    <div class="tfhead">
+      <div class="name">1D <span>Дневна · пробивът</span></div>
+      <div class="readout">RSI <b class="down">75.1</b> · StochRSI <b class="down">99.8</b> · ADX <b>37.4</b> · ATR <b>1 713 (2.45%)</b> · Обем <b class="up">7 355 срещу 4 084 ср.</b></div>
+    </div>
+    <div class="chart"><canvas data-tf="1D"></canvas></div>
+    <div class="legend"><span><i style="background:#7E8AA6"></i>EMA20</span><span><i style="background:#E8A33D"></i>EMA50</span><span><i style="background:#9AA3B5"></i>EMA200</span><span><i style="background:#E8A33D;opacity:.5"></i>ключово ниво</span></div>
+    <div class="tfnote"><p>На 18 август свещта затвори <span class="num">+5.7%</span> при обем 9 730 BTC — 2.4 пъти над средното. Това е денят, който счупи модела: върхът от 20 юли (66 955) падна, а с него и веригата от по-ниски върхове, която властваше от май. 19 август добави още 1.8% и стигна 70 064. Цената вече е над 200-дневната SMA (69 018); над нея стои 200-дневната EMA на <strong>71 689</strong> — там е реалният таван на този импулс. Обратната страна: RSI 75, StochRSI на 99.8 и цена извън горната Болинджър лента — комбинация, която в 2026 г. всеки път е водела до поне 3–5% отдръпване или няколко дни странично.</p></div>
+  </div>
+
+  <div class="tfblock">
+    <div class="tfhead">
+      <div class="name">4H <span>Импулсът без нито една корекция</span></div>
+      <div class="readout">RSI <b class="down">85.1</b> · ADX <b>59.5</b> (+DI 52.1 / −DI 3.3) · горна BB <b>69 706</b></div>
+    </div>
+    <div class="chart"><canvas data-tf="4H"></canvas></div>
+    <div class="legend"><span><i style="background:#7E8AA6"></i>EMA20</span><span><i style="background:#E8A33D"></i>EMA50</span><span><i style="background:#9AA3B5"></i>EMA200</span><span><i style="background:#E8A33D;opacity:.5"></i>ключово ниво</span></div>
+    <div class="tfnote"><p>ADX 59.5 при −DI 3.3 е екстремно еднопосочен разчет — трендът е реален, но подобни стойности маркират зрялост, не начало. Важното тук: <strong>все още няма мечо разминаване</strong>. Новият ценови връх дойде с нов връх и в MACD (хистограма +577), тоест импулсът се потвърждава и шортовете са чиста контра-трендова игра. Първата 4H свещ, която затвори под 67 830, ще е първият сигнал, че ритъмът се чупи. Фибо-корекциите на движението 64 164 → 70 064 дават 68 672 (0.236), 67 810 (0.382) и 67 114 (0.5) — това са зоните, в които трендът остава непокътнат.</p></div>
+  </div>
+
+  <div class="tfblock">
+    <div class="tfhead">
+      <div class="name">1H <span>Флагът под кръглото число</span></div>
+      <div class="readout">RSI <b>74.6 ↘</b> · MACD хист. <b class="down">−33</b> · StochRSI <b>11.2</b> · ADX <b>68.4</b></div>
+    </div>
+    <div class="chart"><canvas data-tf="1H"></canvas></div>
+    <div class="legend"><span><i style="background:#7E8AA6"></i>EMA20</span><span><i style="background:#E8A33D"></i>EMA50</span><span><i style="background:#9AA3B5"></i>EMA200</span><span><i style="background:#E8A33D;opacity:.5"></i>ключово ниво</span></div>
+    <div class="tfnote"><p>След върха 70 064 в 21:00 UTC цената прекара нощта в тесен диапазон 69 000–69 893 — класически бичи флаг, стига 69 000 да не падне. Часовият MACD вече е под сигналната линия, а StochRSI се нулира до 11.2 без цената да пада: това е охлаждане чрез време, не чрез цена, и е по-скоро градивно. Часовата EMA20 (68 492) се изкачва към цената и служи като бърз тест на купувача.</p></div>
+  </div>
+
+  <div class="tfblock">
+    <div class="tfhead">
+      <div class="name">15m <span>Спусъкът</span></div>
+      <div class="readout">RSI <b>61.9</b> · BB ширина <b class="warn">1.32%</b> · ATR <b>184 (0.26%)</b> · EMA50 <b>68 991</b></div>
+    </div>
+    <div class="chart"><canvas data-tf="15m"></canvas></div>
+    <div class="legend"><span><i style="background:#7E8AA6"></i>EMA20</span><span><i style="background:#E8A33D"></i>EMA50</span><span><i style="background:#9AA3B5"></i>EMA200</span><span><i style="background:#E8A33D;opacity:.5"></i>ключово ниво</span></div>
+    <div class="tfnote"><p>Болинджър лентите са в най-тясната си точка от 18 август — волатилността се компресира преди следващото разширяване. Триъгълникът е между 69 893 (по-нисък връх) и 69 280/68 917 (възходящи дъна). 15-минутен затвор над 69 893 с обем над средния отваря 70 064 и веднага след това 70 326; затвор под 68 917 праща цената да търси 68 000-те. Забележка: последната свещ на 1H и 15m все още се формира (обем 13 BTC срещу средно 83) — не се търгува преди затварянето ѝ.</p></div>
+  </div>
+</section>
+
+<section id="levels">
+  <h2>Нивата</h2>
+  <p class="sub">Подредени по конфлуенция — колкото повече независими метода сочат едно число, толкова по-тежко е то. Сила: <span class="strength">●</span> едно основание, <span class="strength">●●</span> две, <span class="strength">●●●</span> три и повече.</p>
+  <div class="ladder">
+    <div class="res">
+      <h3>Съпротиви нагоре</h3>
+      <ul class="lvl">
+        <li><span class="p">70 064</span><span class="why"><b>Върхът от 19 август</b> и 24-часов максимум — първото препятствие<span class="strength">●</span></span></li>
+        <li><span class="p">70 326</span><span class="why"><b>0.5 Фибо</b> на слизането 82 842 → 57 809, плюс кръглото 70 000<span class="strength">●●</span></span></li>
+        <li><span class="p">71 669 – 71 689</span><span class="why"><b>Дневна EMA200</b> (71 689) съвпада с 1.272 разширение на импулса (71 669) — най-вероятният таван на текущата вълна<span class="strength">●●●</span></span></li>
+        <li><span class="p">73 280 – 73 950</span><span class="why"><b>Голям клъстер:</b> 0.618 Фибо (73 280), 1.618 разширение (73 711), върхът от февр. 2024 (73 787), 0.236 от целия мечи диапазон (73 950)<span class="strength">●●●</span></span></li>
+        <li><span class="p">82 473 – 82 842</span><span class="why"><b>Майският по-нисък връх</b> — структурната граница на мечия пазар; над нея макро тезата се сменя<span class="strength">●●●</span></span></li>
+      </ul>
+    </div>
+    <div class="sup">
+      <h3>Подкрепи надолу</h3>
+      <ul class="lvl">
+        <li><span class="p">69 000 – 69 018</span><span class="why"><b>Дневна SMA200</b> (69 018) и нощното дъно 69 000; исторически това е зоната на върха от 2021 г. (69 040)<span class="strength">●●●</span></span></li>
+        <li><span class="p">68 672 – 68 914</span><span class="why"><b>Седмична EMA200</b> (68 914) и 0.236 корекция на импулса (68 672)<span class="strength">●●</span></span></li>
+        <li><span class="p">67 810 – 67 830</span><span class="why"><b>0.382 Фибо</b> и дневното дъно от 19 август — първата зона за купуване с добро съотношение<span class="strength">●●</span></span></li>
+        <li><span class="p">66 418 – 66 955</span><span class="why"><b>Пробитият юлски връх</b> (66 955) като нова подкрепа + 0.618 корекция (66 418) — класически ретест на пробива<span class="strength">●●●</span></span></li>
+        <li><span class="p">64 164 – 65 066</span><span class="why"><b>Базата на импулса.</b> Дневни EMA20/50 (64 916 / 64 752) се вдигат насам. Под 64 164 движението се обезсмисля<span class="strength">●●●</span></span></li>
+        <li><span class="p">62 522</span><span class="why"><b>Дъното от 13 август</b> — последната защита преди цикличния минимум<span class="strength">●●</span></span></li>
+        <li><span class="p">57 809</span><span class="why"><b>Цикличното дъно</b> от 28 юни 2026<span class="strength">●●●</span></span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="scenarios">
+  <h2>Трите сценария</h2>
+  <p class="sub">Хоризонт: следващите 5–10 дни. Вероятностите са субективна преценка на база текущата структура, не измерена величина.</p>
+  <div class="cards">
+    <div class="card base">
+      <div class="prob">50%</div>
+      <h3>Охлаждане, после продължение</h3>
+      <dl>
+        <dt>Спусък</dt><dd>Отказ при <span class="n">70 064–70 326</span> без пробив; 4H затвор под <span class="n">69 000</span></dd>
+        <dt>Път</dt><dd>Корекция към <span class="n">67 810–68 700</span>, изчистване на свръхкупеността, ново тестване нагоре</dd>
+        <dt>Цел</dt><dd><span class="n">71 690</span>, при пробив <span class="n">73 300–73 950</span></dd>
+        <dt>Отпада при</dt><dd>Дневен затвор под <span class="n">66 400</span></dd>
+      </dl>
+    </div>
+    <div class="card bullc">
+      <div class="prob">27%</div>
+      <h3>Директно разширяване</h3>
+      <dl>
+        <dt>Спусък</dt><dd>4H затвор над <span class="n">70 330</span> с обем над средния</dd>
+        <dt>Път</dt><dd>Squeeze-ът на 15m се разрешава нагоре, къси позиции от 66–68к се покриват</dd>
+        <dt>Цел</dt><dd><span class="n">71 670</span> → <span class="n">73 280</span> → <span class="n">73 950</span> за 3–5 дни</dd>
+        <dt>Отпада при</dt><dd>Връщане под <span class="n">69 000</span> в рамките на 24 часа (фалшив пробив)</dd>
+      </dl>
+    </div>
+    <div class="card bearc">
+      <div class="prob">23%</div>
+      <h3>Капанът за биковете</h3>
+      <dl>
+        <dt>Спусък</dt><dd>Мечи ангълфинг на 4H под <span class="n">69 000</span> + мечо разминаване на RSI</dd>
+        <dt>Път</dt><dd><span class="n">67 830</span> → <span class="n">66 400</span> → ретест на базата <span class="n">64 164</span></dd>
+        <dt>Цел</dt><dd>Под <span class="n">62 522</span> се отваря повторно <span class="n">57 809</span></dd>
+        <dt>Отпада при</dt><dd>Дневен затвор над <span class="n">70 330</span></dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="plan">
+  <h2>Как се търгува това</h2>
+  <p class="sub">Нива, а не прогнози. Всяко влизане предполага потвърждение от свещ на съответния таймфрейм — не лимит на сляпо.</p>
+  <div class="plan">
+    <div class="setup">
+      <div class="side">Основен лонг<small>По тренда</small></div>
+      <div class="grid">
+        <div class="cell"><div class="k">Зона</div><div class="v">67 810 – 68 700</div></div>
+        <div class="cell"><div class="k">Стоп</div><div class="v">&lt; 66 300</div></div>
+        <div class="cell"><div class="k">Цел 1</div><div class="v">70 060</div></div>
+        <div class="cell"><div class="k">Цел 2</div><div class="v">71 670</div></div>
+        <div class="cell"><div class="k">Цел 3</div><div class="v">73 300</div></div>
+        <div class="cell"><div class="k">R:R до Ц2</div><div class="v">≈ 1 : 1.7</div></div>
+        <div class="rationale">Купува се 0.236–0.382 корекцията на импулса, където седмичната EMA200 и дневната SMA200 се превръщат в подова конфлуенция. Стопът стои под 0.618 (66 418), защото под това ниво структурата на импулса е нарушена.</div>
+      </div>
+    </div>
+    <div class="setup">
+      <div class="side">Дълбок лонг<small>Ретест на пробива</small></div>
+      <div class="grid">
+        <div class="cell"><div class="k">Зона</div><div class="v">66 400 – 67 100</div></div>
+        <div class="cell"><div class="k">Стоп</div><div class="v">&lt; 64 900</div></div>
+        <div class="cell"><div class="k">Цел 1</div><div class="v">69 800</div></div>
+        <div class="cell"><div class="k">Цел 2</div><div class="v">71 670</div></div>
+        <div class="cell"><div class="k">Цел 3</div><div class="v">73 780</div></div>
+        <div class="cell"><div class="k">R:R до Ц2</div><div class="v">≈ 1 : 2.5</div></div>
+        <div class="rationale">Сценарият с най-добра математика: пробитият юлски връх 66 955 се тества отгоре, а дневните EMA20/50 се вдигат насам до края на седмицата. Изисква търпение — може изобщо да не се стигне дотам.</div>
+      </div>
+    </div>
+    <div class="setup">
+      <div class="side">Контра-трендов шорт<small>Само с потвърждение</small></div>
+      <div class="grid">
+        <div class="cell"><div class="k">Зона</div><div class="v">70 000 – 70 330</div></div>
+        <div class="cell"><div class="k">Стоп</div><div class="v">&gt; 71 750</div></div>
+        <div class="cell"><div class="k">Цел 1</div><div class="v">68 700</div></div>
+        <div class="cell"><div class="k">Цел 2</div><div class="v">67 830</div></div>
+        <div class="cell"><div class="k">Цел 3</div><div class="v">66 400</div></div>
+        <div class="cell"><div class="k">R:R до Ц2</div><div class="v">≈ 1 : 1.4</div></div>
+        <div class="rationale">Валиден единствено при отхвърляне с мечи ангълфинг на 4H и <em>появило се</em> разминаване в MACD/RSI. В момента такова няма — при ADX 59.5 и −DI 3.3 шортът срещу тренда е сделка с ниска вероятност. Половин размер или никак.</div>
+      </div>
+    </div>
+    <div class="setup">
+      <div class="side">Какво не се прави<small>Дисциплина</small></div>
+      <div class="grid">
+        <div class="rationale" style="grid-column:1/-1">Не се купува на пазар при 69 700–70 000. Цената е 2.83 ATR над дневната EMA20 и извън горната Болинджър лента; стопът, който има логика (под 69 000), е на 1.1% — тоест влизането е или с прекалено тесен стоп, или с прекалено голям риск. Изчаква се или корекция, или потвърден пробив над 70 330 с ретест.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="risk">
+  <h2>Управление на риска</h2>
+  <div class="risk">
+    <div><div class="k">Размер спрямо ATR</div><p>Дневният ATR е 1 713 (2.45%). Стоп по-тесен от 1 ATR при този тренд се избива от шума. Изчислявай позицията от разстоянието до стопа, не от желаната експозиция.</p></div>
+    <div><div class="k">Риск на сделка</div><p>При толкова разтеглена цена — не повече от 1% от капитала на позиция и максимум две едновременни корелирани крипто позиции.</p></div>
+    <div><div class="k">Частично фиксиране</div><p>Първата цел е логично място за 30–40% от позицията и преместване на стопа на нула. Импулс с 4H RSI 85 не се държи изцяло „до последно“.</p></div>
+    <div><div class="k">Времеви риск</div><p>Последната 1H/15m свещ още се формира. Седмичното затваряне в неделя над 68 914 е събитието, което потвърждава или отменя цялата бича теза.</p></div>
+    <div><div class="k">Наблюдавай фондинга</div><p>Сега е 0.010% (базово). Ако скочи над 0.05% при цена под 71 700, ралито става ливъридж-задвижено и рискът от рязко изчистване нараства.</p></div>
+    <div><div class="k">Невалидиране</div><p>Едно число за цялата теза: <strong>64 164</strong>. Дневен затвор под него превръща пробива в капан и връща 62 522 / 57 809 в игра.</p></div>
+  </div>
+</section>
+
+<footer>
+  <p class="mono">Данни: OKX spot BTC-USDT (свещи 1M/1W/1D/4H/1H/15m, до 300 периода на таймфрейм) и OKX перпетуален BTC-USDT-SWAP за фондинг, отворен интерес и съотношение лонг/шорт. Моментна снимка: 20 август 2026, 07:06 UTC. Всички индикатори (EMA, RSI, MACD, ATR, ADX/DI, Болинджър, StochRSI, обемен профил, Фибо) са пресметнати върху тези данни.</p>
+  <p>Материалът е технически анализ с образователна цел, не е инвестиционен съвет и не отчита фундаментални или макроикономически фактори. Криптовалутите носят риск от загуба на целия капитал. Решенията са ваши.</p>
+</footer>
+</div>
+<script>const MD={"1M":{"t":[1646064000000,1648742400000,1651334400000,1654012800000,1656604800000,1659283200000,1661961600000,1664553600000,1667232000000,1669824000000,1672502400000,1675180800000,1677600000000,1680278400000,1682870400000,1685548800000,1688140800000,1690819200000,1693497600000,1696089600000,1698768000000,1701360000000,1704038400000,1706716800000,1709222400000,1711900800000,1714492800000,1717171200000,1719763200000,1722441600000,1725120000000,1727712000000,1730390400000,1732982400000,1735660800000,1738339200000,1740758400000,1743436800000,1746028800000,1748707200000,1751299200000,1753977600000,1756656000000,1759248000000,1761926400000,1764518400000,1767196800000,1769875200000,1772294400000,1774972800000,1777564800000,1780243200000,1782835200000,1785513600000],"o":[40823.2,46453.4,38469.1,32057.4,19143.8,23772.6,20145.0,19751.7,20400.0,16865.7,16595.0,23123.5,23521.1,28492.3,29661.8,26906.5,30068.2,29246.9,26923.5,26994.9,34272.5,37617.7,42457.6,43353.2,62764.2,70394.0,60793.7,67209.7,61720.0,66386.0,59013.8,63558.8,70627.9,96646.6,95417.9,105437.9,83997.1,83420.7,94007.3,104554.2,107575.0,118313.9,108801.7,113120.4,110180.8,91440.0,87945.0,81302.0,64837.0,66733.1,76465.7,73651.9,58384.1,62725.1],"h":[48184.8,47440.0,40033.3,32408.5,24666.0,25205.0,22800.0,21080.0,21475.9,18377.1,23963.0,25320.0,29183.7,31043.4,29867.1,31456.0,31830.0,30242.7,27500.0,35919.2,38487.0,44726.8,48988.0,64085.2,73787.1,72799.0,71979.0,71997.0,70050.0,66838.0,66500.0,73650.0,99588.0,108365.0,109800.0,105574.6,95000.0,95768.4,111963.0,110650.0,123226.0,124500.0,117910.0,126200.0,111245.5,94600.0,97925.4,82216.0,76011.8,79488.0,82842.0,74210.9,66955.0,70064.2],"l":[37158.8,37700.0,26700.0,17618.0,18616.0,19523.9,18144.5,18155.0,15450.0,16248.6,16477.6,21356.5,19529.7,26902.6,25791.7,24783.0,28866.7,24220.0,24900.0,26530.0,34054.9,37526.4,38554.0,41868.2,59000.0,59587.2,56555.0,58378.0,53269.0,48934.8,52528.6,58935.6,66822.5,89711.9,89111.0,78258.5,76600.0,74501.6,93390.1,98188.4,105100.0,107343.7,107250.0,101500.0,80636.3,83833.4,80831.6,60000.0,64677.9,65701.7,72508.0,58110.0,57809.4,62268.5],"c":[46453.4,38469.1,32056.1,19141.4,23771.6,20144.9,19750.6,20400.0,16865.4,16595.0,23122.3,23521.0,28492.2,29661.9,26906.5,30068.2,29246.9,26923.5,26994.8,34272.5,37616.6,42457.5,43354.2,62764.2,70394.0,60793.9,67209.6,61719.8,66385.9,59013.8,63558.8,70628.0,96646.7,95417.8,105438.0,83997.2,83423.0,94009.3,104554.2,107575.1,118314.0,108801.7,113120.3,110188.7,91439.9,87945.0,81302.0,64837.1,66733.1,76465.7,73651.9,58384.0,62725.0,69806.0],"v":[279744.3,220252.1,385407.9,444649.0,466672.8,381884.3,324528.6,250241.9,318666.9,161717.3,249261.1,223433.2,509024.2,274034.3,264808.4,355260.7,203327.8,231019.5,208585.9,331533.2,368587.6,410205.5,536880.1,337125.2,507121.9,401050.0,276454.8,185245.3,258924.7,332667.4,227710.3,246893.7,372995.8,305854.8,281491.2,264290.0,321720.6,292348.9,225704.5,162387.2,165231.5,163471.7,131325.8,275290.5,263010.8,173559.0,180867.7,289989.3,237546.7,176997.4,190317.3,298559.9,210812.9,81681.5],"e20":[38386.9,38394.7,37791.1,36014.9,34848.9,33448.5,32143.9,31025.5,29676.9,28431.0,27925.4,27505.9,27599.9,27796.2,27711.5,27936.0,28060.8,27952.5,27861.3,28471.9,29342.8,30591.8,31807.3,34755.6,38149.7,40306.3,42868.5,44663.9,46732.6,47902.3,49393.4,51415.7,55723.4,59503.8,63878.5,65794.6,67473.5,70000.7,73291.5,76556.6,80533.5,83225.7,86072.8,88369.6,88662.0,88593.7,87899.3,85702.9,83896.2,83188.5,82280.3,80004.5,78358.8,77544.2],"e50":[25817.7,26313.8,26539.0,26248.9,26151.8,25916.2,25674.4,25467.6,25130.2,24795.5,24729.9,24682.5,24831.9,25021.3,25095.2,25290.3,25445.4,25503.4,25561.9,25903.5,26362.8,26994.0,27635.5,29013.1,30635.9,31818.6,33206.5,34324.6,35581.9,36500.8,37561.9,38858.6,41124.8,43254.0,45692.6,47194.7,48615.4,50395.6,52519.4,54678.5,57174.0,59198.6,61313.2,63229.9,64336.2,65262.0,65891.0,65849.7,65884.3,66299.3,66587.6,66265.9,66127.0,66271.3],"e200":[12638.6,12895.6,13086.3,13146.5,13252.2,13320.8,13384.8,13454.6,13488.5,13519.4,13615.0,13713.6,13860.6,14017.8,14146.1,14304.5,14453.2,14577.3,14700.8,14895.6,15121.7,15393.7,15671.9,16140.4,16680.3,17119.2,17617.6,18056.5,18537.4,18940.1,19384.1,19894.0,20657.7,21401.6,22237.7,22852.3,23455.0,24157.0,24957.0,25779.0,26699.8,27516.7,28368.5,29182.6,29802.1,30380.6,30887.3,31225.1,31578.4,32025.1,32439.3,32697.4,32996.2,33362.5],"rsi":[57.7,52.4,48.5,41.7,44.7,42.9,42.7,43.1,41.1,41.0,46.3,46.7,50.6,51.5,49.2,51.9,51.1,49.0,49.1,55.8,58.5,62.2,62.8,73.5,76.3,66.6,69.4,64.4,66.6,60.3,62.6,66.0,75.0,74.0,76.7,61.8,61.5,65.3,68.7,69.6,72.6,66.3,67.7,65.7,54.8,53.1,49.8,42.7,43.7,48.6,47.3,41.0,43.3,47.0]},"1W":{"t":[1733068800000,1733673600000,1734278400000,1734883200000,1735488000000,1736092800000,1736697600000,1737302400000,1737907200000,1738512000000,1739116800000,1739721600000,1740326400000,1740931200000,1741536000000,1742140800000,1742745600000,1743350400000,1743955200000,1744560000000,1745164800000,1745769600000,1746374400000,1746979200000,1747584000000,1748188800000,1748793600000,1749398400000,1750003200000,1750608000000,1751212800000,1751817600000,1752422400000,1753027200000,1753632000000,1754236800000,1754841600000,1755446400000,1756051200000,1756656000000,1757260800000,1757865600000,1758470400000,1759075200000,1759680000000,1760284800000,1760889600000,1761494400000,1762099200000,1762704000000,1763308800000,1763913600000,1764518400000,1765123200000,1765728000000,1766332800000,1766937600000,1767542400000,1768147200000,1768752000000,1769356800000,1769961600000,1770566400000,1771171200000,1771776000000,1772380800000,1772985600000,1773590400000,1774195200000,1774800000000,1775404800000,1776009600000,1776614400000,1777219200000,1777824000000,1778428800000,1779033600000,1779638400000,1780243200000,1780848000000,1781452800000,1782057600000,1782662400000,1783267200000,1783872000000,1784476800000,1785081600000,1785686400000,1786291200000,1786896000000],"o":[97029.5,99907.2,102696.9,95370.9,94505.5,98029.8,95073.9,104933.5,104972.5,99348.2,96488.8,96913.7,95451.7,87428.0,83070.1,83316.5,85194.0,82736.5,82547.6,83850.8,84345.4,93902.1,95467.6,104134.7,105515.9,106973.3,104712.0,105975.0,105568.0,98911.2,107744.0,108910.0,118678.1,118683.9,118600.0,113943.3,118787.0,118243.6,114406.7,108801.7,111336.4,115224.1,115534.0,110035.5,122807.0,113199.1,108480.0,113699.8,110117.1,103753.0,94589.7,87084.0,91440.0,89554.7,89027.7,88071.0,87839.2,91332.9,90875.0,95114.0,88456.1,77601.9,71181.5,69096.0,67691.3,66844.4,67208.1,71478.1,68844.0,66526.2,67304.5,70887.0,75851.1,78045.0,78668.9,81414.5,78041.8,76377.8,73651.9,62100.0,64024.6,64224.7,59895.8,62741.9,64180.1,64579.1,64773.0,63112.0,65230.4,63146.7],"h":[104056.0,103360.7,108365.0,99968.9,98977.9,102750.0,105847.4,109800.0,106450.3,102500.0,98843.9,99485.9,96513.7,95000.0,85300.0,87446.9,88769.2,88500.0,86100.0,86460.0,95768.4,97896.0,104999.0,105850.0,111963.0,110729.0,106804.0,110650.0,108974.7,108539.0,110529.0,119449.9,123226.0,120249.3,119828.0,119100.0,124500.0,118326.6,114916.0,113400.0,116666.0,117910.0,115671.2,125790.0,126200.0,115960.0,114047.7,116400.0,110757.5,107500.0,96055.8,93079.0,94162.8,94600.0,90375.0,90598.0,91820.0,94793.7,97925.4,95529.0,90606.1,79335.5,72288.0,70118.0,69999.9,74096.0,73893.0,76011.8,72012.0,69318.0,73807.2,78344.3,79462.3,79488.0,82842.0,82473.6,78487.6,78084.5,74210.9,64758.8,67300.0,65629.5,63469.3,64706.3,65600.0,66955.0,65750.0,65388.0,65490.3,70064.2],"l":[89711.9,94000.0,92268.0,92525.0,91540.0,91200.0,89111.0,99526.4,97751.6,91182.6,94021.3,93363.3,78258.5,81501.0,76600.0,81144.0,81644.2,81203.0,74501.6,83020.2,84259.4,92774.1,93390.1,100733.0,102080.4,103078.7,100400.0,102640.0,98900.4,98188.4,105100.0,107421.4,115726.7,114712.4,111903.1,112653.0,116800.0,111684.0,107343.7,107250.0,110608.8,114370.0,108617.3,110007.1,101500.0,103514.5,106650.9,106308.9,98941.2,94000.1,80636.3,85278.2,83833.4,88632.9,84456.2,86400.0,86804.2,89327.8,90132.1,87258.7,75678.0,60000.0,65120.1,65641.2,62500.2,65051.5,65616.3,68100.1,65559.6,65000.0,67157.0,70505.9,73717.9,74943.7,78205.0,77656.0,74258.6,72508.0,59111.2,60687.2,62270.0,58110.0,57809.4,61318.3,61830.0,63740.0,62268.5,62300.0,62521.8,62715.7],"c":[99907.1,102696.9,95370.9,94505.4,98029.8,95073.9,104933.5,104972.6,99348.2,96488.7,96913.6,95451.7,87427.9,83070.1,83316.6,85194.0,82735.2,82547.6,83850.8,84345.4,93902.1,95467.6,104134.6,105515.9,106973.3,104711.9,105975.1,105568.0,98911.3,107744.1,108909.9,118678.1,118683.9,118600.0,113943.4,118787.0,118243.5,114406.6,108801.7,111336.4,115224.0,115534.1,110035.6,122807.0,113199.0,108480.0,113699.7,110117.0,103753.1,94589.7,87084.1,91439.9,89554.8,89027.7,88071.1,87839.2,91332.9,90875.0,95113.9,88456.1,77600.9,71181.5,69094.9,67691.3,66841.6,67209.0,71478.1,68843.9,66526.2,67304.4,70887.0,75851.1,78045.0,78668.9,81413.4,78041.8,76377.7,73651.9,62099.2,64024.7,64225.7,59895.7,62741.8,64180.1,64579.0,64773.3,63111.9,65230.4,63146.6,69770.8],"v":[79465.8,64674.5,92345.9,46337.6,43132.1,49509.4,67855.9,92004.7,61595.6,76735.6,39926.4,41423.6,110949.5,111671.4,82905.8,48987.1,51673.0,63841.1,108700.9,44630.0,61288.1,46972.6,52038.4,43118.1,63190.5,45257.5,35790.4,37967.8,41207.2,40489.2,26214.1,37044.6,44084.1,45171.1,34218.7,27909.1,40532.1,35452.0,41989.1,32017.6,30718.5,28161.6,28766.0,46723.8,71151.6,64596.1,58697.4,55005.2,64981.8,62753.2,81367.4,44686.8,50541.0,42950.5,37453.1,28097.2,30413.9,36033.1,40745.6,40584.9,61971.3,123670.1,52567.3,35480.1,72891.3,71914.2,50007.5,45405.0,47068.4,36870.9,45650.0,47686.3,38581.8,41705.8,38208.2,45716.5,48897.0,38166.4,84730.4,80776.7,57094.1,47021.6,73245.5,56729.1,40669.8,41015.2,32966.7,25433.1,25663.3,25710.4],"e20":[75178.2,77799.0,79472.5,80904.2,82535.2,83729.4,85748.8,87579.7,88700.5,89442.2,90153.8,90658.3,90350.7,89657.3,89053.4,88685.8,88119.1,87588.5,87232.5,86957.6,87618.9,88366.4,89868.2,91358.4,92845.6,93975.7,95118.5,96113.7,96380.1,97462.4,98552.6,100469.4,102204.1,103765.6,104734.9,106073.2,107232.3,107915.5,107999.9,108317.7,108975.4,109600.1,109641.6,110895.4,111114.8,110863.9,111133.9,111037.1,110343.4,108843.0,106770.7,105310.7,103810.1,102402.3,101037.4,99780.4,98975.9,98204.4,97910.0,97009.7,95161.2,92877.4,90612.4,88429.5,86373.5,84548.3,83303.5,81926.4,80459.7,79206.8,78414.5,78170.3,78158.4,78207.0,78512.4,78467.6,78268.5,77828.9,76330.8,75158.8,74117.5,72763.1,71808.7,71082.1,70462.8,69920.9,69272.5,68887.5,68340.7,68476.9],"e50":[63605.1,65138.1,66323.7,67428.9,68628.9,69666.0,71049.0,72379.4,73437.0,74341.0,75226.2,76019.3,76466.7,76725.7,76984.1,77306.1,77519.0,77716.2,77956.8,78207.3,78822.8,79475.5,80442.5,81425.8,82427.7,83301.6,84190.7,85029.1,85573.5,86442.9,87323.9,88553.5,89735.1,90867.1,91772.0,92831.4,93828.0,94635.0,95190.5,95823.7,96584.5,97327.6,97826.0,98805.6,99370.1,99727.3,100275.3,100661.2,100782.5,100539.6,100011.9,99675.8,99278.9,98876.9,98453.1,98036.9,97774.0,97503.4,97409.7,97058.6,96295.6,95310.7,94282.6,93239.8,92204.6,91224.4,90450.0,89602.7,88697.8,87858.8,87193.2,86748.5,86407.1,86103.7,85919.7,85610.8,85248.7,84793.9,83904.0,83124.4,82383.3,81501.4,80765.7,80115.3,79506.0,78928.3,78308.0,77795.2,77220.7,76928.6],"e200":[43164.2,43756.5,44270.1,44770.0,45299.9,45795.2,46383.6,46966.6,47487.8,47975.4,48462.3,48929.9,49312.9,49648.8,49983.8,50334.2,50656.6,50973.9,51301.0,51629.8,52050.5,52482.5,52996.4,53519.0,54050.9,54555.0,55066.6,55569.1,56000.4,56515.3,57036.6,57649.9,58257.2,58857.7,59405.8,59996.6,60576.2,61111.8,61586.4,62081.4,62610.2,63136.8,63603.4,64192.5,64680.2,65116.0,65599.4,66042.4,66417.6,66697.9,66900.8,67144.9,67367.9,67583.4,67787.3,67986.8,68219.1,68444.5,68709.9,68906.4,68992.9,69014.7,69015.5,69002.3,68980.8,68963.2,68988.2,68986.8,68962.3,68945.8,68965.1,69033.6,69123.3,69218.3,69339.6,69426.2,69495.4,69536.7,69462.7,69408.6,69357.0,69262.9,69198.0,69148.1,69102.6,69059.5,69000.4,68962.8,68905.0,68913.6],"rsi":[77.6,78.7,68.7,67.6,69.7,65.8,71.5,71.5,64.4,61.1,61.4,59.6,50.7,46.7,46.9,49.0,46.5,46.3,47.9,48.5,59.0,60.4,67.2,68.1,69.1,65.7,66.7,66.0,56.1,63.9,64.7,71.1,71.1,71.0,64.1,67.6,66.8,61.4,54.4,56.8,60.2,60.5,53.5,63.9,54.1,50.1,54.2,51.1,46.0,39.9,35.7,39.7,38.6,38.3,37.7,37.5,41.4,41.1,45.8,40.3,33.3,30.0,28.9,28.2,27.8,28.3,34.2,32.4,30.9,32.1,37.2,43.6,46.2,46.9,50.2,46.4,44.6,41.8,32.3,35.0,35.3,32.0,36.2,38.2,38.8,39.1,37.4,40.9,38.6,48.6]},"1D":{"t":[1773417600000,1773504000000,1773590400000,1773676800000,1773763200000,1773849600000,1773936000000,1774022400000,1774108800000,1774195200000,1774281600000,1774368000000,1774454400000,1774540800000,1774627200000,1774713600000,1774800000000,1774886400000,1774972800000,1775059200000,1775145600000,1775232000000,1775318400000,1775404800000,1775491200000,1775577600000,1775664000000,1775750400000,1775836800000,1775923200000,1776009600000,1776096000000,1776182400000,1776268800000,1776355200000,1776441600000,1776528000000,1776614400000,1776700800000,1776787200000,1776873600000,1776960000000,1777046400000,1777132800000,1777219200000,1777305600000,1777392000000,1777478400000,1777564800000,1777651200000,1777737600000,1777824000000,1777910400000,1777996800000,1778083200000,1778169600000,1778256000000,1778342400000,1778428800000,1778515200000,1778601600000,1778688000000,1778774400000,1778860800000,1778947200000,1779033600000,1779120000000,1779206400000,1779292800000,1779379200000,1779465600000,1779552000000,1779638400000,1779724800000,1779811200000,1779897600000,1779984000000,1780070400000,1780156800000,1780243200000,1780329600000,1780416000000,1780502400000,1780588800000,1780675200000,1780761600000,1780848000000,1780934400000,1781020800000,1781107200000,1781193600000,1781280000000,1781366400000,1781452800000,1781539200000,1781625600000,1781712000000,1781798400000,1781884800000,1781971200000,1782057600000,1782144000000,1782230400000,1782316800000,1782403200000,1782489600000,1782576000000,1782662400000,1782748800000,1782835200000,1782921600000,1783008000000,1783094400000,1783180800000,1783267200000,1783353600000,1783440000000,1783526400000,1783612800000,1783699200000,1783785600000,1783872000000,1783958400000,1784044800000,1784131200000,1784217600000,1784304000000,1784390400000,1784476800000,1784563200000,1784649600000,1784736000000,1784822400000,1784908800000,1784995200000,1785081600000,1785168000000,1785254400000,1785340800000,1785427200000,1785513600000,1785600000000,1785686400000,1785772800000,1785859200000,1785945600000,1786032000000,1786118400000,1786204800000,1786291200000,1786377600000,1786464000000,1786550400000,1786636800000,1786723200000,1786809600000,1786896000000,1786982400000,1787068800000,1787155200000],"o":[71832.0,70579.2,71478.1,73269.1,73915.5,71468.0,69411.0,69870.7,70630.2,68844.0,70134.0,69869.6,70831.1,69086.3,66102.0,67020.3,66526.2,67624.0,66733.1,68917.3,66849.2,66832.1,67379.5,67304.5,69965.0,68168.2,71306.6,72144.4,72456.0,72863.0,70887.0,71868.0,75327.1,73841.4,74701.6,77781.3,76171.7,75851.1,75713.6,75839.5,79270.6,78377.2,78043.7,77332.0,78045.0,76790.3,76067.7,75922.1,76465.7,78445.1,78490.7,78668.9,80033.5,81529.3,81702.1,79898.0,80150.4,80522.6,81414.5,81450.1,80331.0,78835.0,81292.1,79159.6,78237.2,78041.8,76416.1,76529.2,77458.2,77262.8,76797.4,75521.6,76377.8,77629.0,76519.4,75335.4,72930.4,73804.4,73929.5,73651.9,71130.6,67303.0,66077.1,63893.4,60430.7,60777.2,62100.0,63774.9,61130.9,62636.8,62754.8,63595.3,64305.5,64024.6,67293.7,65873.2,65752.3,62369.8,63220.5,64168.0,64224.7,64838.8,62489.5,60279.9,59560.7,60325.2,60846.0,59895.8,59820.4,58384.1,60147.9,61606.9,61929.8,62939.7,62741.9,63547.9,63941.0,61699.2,62860.8,64044.5,64175.2,64180.1,62615.9,64758.1,65424.6,64703.7,63457.9,64120.5,64579.1,65598.6,66677.2,66043.0,64957.7,64099.2,64182.7,64773.0,64559.6,63923.4,63972.4,64734.0,62725.1,63000.1,63112.0,63693.0,64120.9,64386.2,64631.0,64909.7,65078.4,65230.4,64298.0,63606.7,63445.9,63416.7,62984.8,63094.0,63146.7,64203.7,64860.3,68553.5],"h":[72241.7,71933.3,74500.0,76011.8,74800.0,72008.0,71366.0,71100.0,70655.9,71809.4,71400.0,72012.0,71760.2,69485.2,67300.0,67124.6,68181.6,68414.0,69318.0,69176.3,67428.5,67545.7,67866.6,70273.4,70344.8,72858.0,72350.0,73305.4,73444.5,73807.2,72458.7,76048.1,75693.5,75429.9,78044.1,78344.3,76248.7,75862.5,76954.1,79398.0,79462.3,78571.4,78061.2,78212.1,79488.0,77494.5,77891.7,76660.0,78919.7,78683.8,79198.6,80622.0,81730.5,82842.0,81891.3,80513.2,80684.2,81449.0,82473.6,82134.9,81324.6,81330.5,82048.1,79572.8,78605.4,78487.6,77410.9,77853.0,78200.0,78100.0,77099.9,77529.3,77906.8,78084.5,76720.1,75420.8,74195.6,74335.0,74276.6,74210.9,71808.4,68141.0,66374.9,64160.0,61998.9,62961.2,64381.9,64046.6,62857.1,63260.0,64388.0,64345.0,64758.8,67300.0,67293.7,66245.0,66436.1,63425.5,64384.5,64594.0,65629.5,64870.9,63244.7,61964.2,60764.2,60947.7,60867.8,60789.4,60688.0,60545.4,62209.2,62407.0,63090.9,63469.3,63999.8,64706.3,64247.9,63284.8,64694.9,64520.2,64464.9,64424.9,64999.0,65600.0,65467.4,64719.1,64391.9,64967.9,65678.0,66955.0,66762.2,66385.4,65800.0,64291.3,64828.8,65750.0,65099.3,64751.6,65180.0,65423.7,63307.2,63639.4,63990.0,64244.2,64746.4,65026.6,65388.0,65189.8,65300.0,65490.3,64500.0,64496.9,64014.2,63645.4,63244.6,63172.1,64228.1,65066.1,69888.0,70064.2],"l":[70320.0,70473.5,71300.0,73158.0,70858.1,68796.3,69125.3,69393.5,68100.1,67360.1,69517.1,68924.0,68616.7,65714.2,65559.6,66277.0,65000.0,66000.0,66727.7,65701.7,66284.1,66755.6,66606.7,67157.0,67730.1,68079.9,70463.1,71428.0,72380.9,70610.8,70505.9,71675.8,73507.1,73302.8,73914.5,75780.9,74889.7,73717.9,75290.1,74825.6,77180.0,76953.8,77260.8,77129.5,76562.3,75660.1,75714.0,74943.7,76077.8,77750.0,78061.9,78205.0,79624.5,80722.8,79705.7,79164.5,79739.2,80481.6,80280.1,80174.1,78812.0,78760.1,78650.0,77656.0,77704.0,76053.0,76143.7,76413.6,76734.5,76571.5,74258.6,75367.7,76109.7,76267.3,74772.3,72584.1,72508.0,73185.0,73508.4,71070.6,67082.0,65450.0,61365.0,60050.0,59111.2,60401.9,61185.0,61040.0,60687.2,61105.3,62342.3,63392.7,63868.0,63683.9,65366.0,64560.6,62291.0,62270.0,62869.1,63734.0,63262.0,61930.0,60264.3,58110.0,58330.5,59558.3,59754.4,58896.0,58200.0,57809.4,59582.6,61129.0,61911.1,62444.4,61318.3,62663.1,61548.4,61690.4,62560.1,63664.0,63643.2,62108.0,61830.0,64263.6,63858.8,62536.4,63312.9,64091.7,63762.4,65045.5,65552.6,64725.4,63740.0,63806.4,64124.2,64426.4,62741.1,63504.2,63261.6,62457.1,62710.6,62268.5,62300.0,63328.0,63880.7,64172.6,64159.6,64519.2,64722.7,64205.6,63450.0,63237.6,63309.4,62521.8,62800.0,62964.3,62715.7,63979.7,64163.6,67830.3],"c":[70579.1,71478.1,73269.1,73917.4,71468.0,69409.5,69870.6,70630.1,68843.9,70133.0,69869.6,70831.5,69090.0,66102.0,67020.0,66526.2,67623.9,66733.1,68917.3,66852.4,66832.1,67379.4,67304.4,69965.1,68168.2,71307.4,72144.4,72456.0,72863.0,70887.0,71868.1,75328.2,73843.8,74701.6,77781.3,76171.6,75851.1,75710.9,75839.4,79270.5,78377.1,78043.7,77332.0,78045.0,76790.2,76067.2,75922.2,76465.7,78445.3,78490.6,78668.9,80033.5,81530.3,81704.6,79898.0,80150.3,80522.6,81413.4,81450.0,80331.0,78835.1,81292.0,79159.5,78237.1,78041.8,76416.1,76528.5,77458.1,77262.8,76797.4,75521.6,76377.7,77629.0,76519.3,75335.3,72930.9,73805.7,73929.4,73651.9,71130.6,67303.0,66077.1,63893.4,60430.7,60777.2,62099.2,63774.8,61131.3,62636.8,62754.7,63594.7,64305.5,64024.7,67293.6,65873.4,65752.3,62373.0,63220.3,64163.5,64225.7,64835.0,62489.5,60279.9,59560.6,60325.2,60845.9,59895.7,59820.4,58384.0,60147.9,61606.8,61929.8,62939.7,62741.8,63546.8,63940.9,61699.4,62863.2,64045.4,64175.2,64180.1,62615.9,64758.0,65424.5,64703.6,63457.9,64120.4,64579.0,65598.6,66677.3,66043.0,64957.7,64099.2,64182.6,64773.3,64561.0,63923.4,63972.4,64733.9,62725.0,63000.1,63111.9,63693.0,64120.8,64386.2,64630.9,64908.9,65078.3,65230.4,64298.0,63606.0,63445.9,63416.6,62984.7,63093.9,63146.6,64203.6,64860.2,68556.8,69768.1],"v":[5075.9,2531.3,8461.1,8631.7,6609.4,7517.6,6135.5,3505.2,4544.6,10870.2,6134.1,6647.4,5699.1,9974.5,4643.8,3099.2,7030.9,7137.3,7698.6,7079.6,3745.9,1966.2,2212.4,7045.0,6119.1,11521.8,5066.7,6841.0,3166.6,5889.7,4373.6,10303.8,6834.2,6041.8,10805.6,5791.0,3536.3,6207.2,4580.3,7187.0,7428.7,6979.1,3605.5,2594.0,5520.6,5015.3,5116.9,6723.8,14483.6,2378.7,2466.9,10186.8,6953.7,7045.7,4530.5,5254.7,2335.4,1901.4,4950.2,8600.4,9081.4,6863.4,8044.5,4909.2,3267.3,9441.4,10852.3,4417.0,5551.7,9109.4,5490.7,4034.5,3577.1,4704.5,5187.0,7410.3,5537.6,8152.3,3597.6,6377.8,12978.2,10719.7,18365.2,14961.4,14828.5,6499.5,8608.7,7620.3,38722.6,8290.9,7315.1,3852.0,6367.0,14064.7,5058.0,4360.4,13942.1,6254.3,6582.6,6831.9,5807.2,5286.4,5980.5,13615.2,10251.2,3801.7,2279.4,7537.2,21400.1,9848.2,20226.5,6524.8,4593.7,3115.1,7977.3,7403.1,6707.6,20748.8,8261.1,3193.3,2437.9,8625.6,7031.4,6994.6,4452.0,5658.0,2098.3,5810.1,6529.2,6985.9,7353.7,6061.4,9142.1,2713.5,2229.3,5288.6,6177.1,4481.9,5859.8,6283.2,2421.3,2454.8,4404.8,4152.6,7260.1,3690.8,3308.5,1593.2,1023.0,3098.0,3492.5,5822.6,4544.1,6402.1,1609.4,694.6,3530.6,5094.8,9730.1,7354.9],"e20":[69623.6,69800.2,70130.6,70491.2,70584.3,70472.4,70415.1,70435.5,70284.0,70269.6,70231.5,70288.6,70174.5,69786.6,69523.1,69237.7,69084.0,68860.1,68865.6,68673.8,68498.4,68391.9,68288.3,68448.0,68421.3,68696.2,69024.6,69351.4,69685.8,69800.2,69997.2,70504.9,70822.9,71192.3,71819.8,72234.3,72578.7,72877.0,73159.2,73741.2,74182.7,74550.4,74815.3,75122.9,75281.7,75356.5,75410.4,75510.9,75790.4,76047.5,76297.2,76653.0,77117.5,77554.4,77777.6,78003.6,78243.5,78545.4,78822.0,78965.7,78953.3,79176.0,79174.4,79085.2,78985.8,78741.1,78530.3,78428.2,78317.2,78172.5,77920.0,77773.1,77759.4,77641.3,77421.7,76994.0,76690.3,76427.4,76163.1,75683.8,74885.6,74046.7,73079.7,71875.1,70818.1,69987.7,69396.0,68608.9,68040.1,67536.8,67161.3,66889.3,66616.5,66681.0,66604.1,66523.0,66127.7,65850.8,65690.1,65550.7,65482.5,65197.5,64729.1,64236.9,63864.3,63576.9,63226.3,62901.9,62471.6,62250.3,62189.0,62164.3,62238.2,62286.2,62406.2,62552.4,62471.1,62508.5,62654.9,62799.6,62931.1,62901.1,63077.9,63301.4,63435.0,63437.2,63502.2,63604.8,63794.7,64069.2,64257.2,64323.9,64302.5,64291.1,64337.0,64358.3,64316.9,64284.1,64326.9,64174.4,64062.5,63972.0,63945.4,63962.1,64002.5,64062.4,64143.0,64232.1,64327.1,64324.4,64256.0,64178.8,64106.2,63999.4,63913.2,63840.2,63874.8,63968.6,64405.6,64916.3],"e50":[73035.3,72974.2,72985.8,73022.3,72961.3,72822.1,72706.3,72624.9,72476.6,72384.7,72286.1,72229.0,72105.9,71870.5,71680.3,71478.1,71327.0,71146.8,71059.4,70894.4,70735.1,70603.5,70474.2,70454.2,70364.5,70401.5,70469.9,70547.8,70638.5,70648.3,70696.1,70877.8,70994.1,71139.5,71399.9,71587.1,71754.3,71909.4,72063.6,72346.2,72582.7,72796.9,72974.7,73173.5,73315.4,73423.3,73521.3,73636.7,73825.3,74008.3,74191.0,74420.2,74699.0,74973.7,75166.8,75362.3,75564.6,75794.0,76015.8,76185.0,76288.9,76485.1,76590.0,76654.6,76709.0,76697.5,76690.9,76721.0,76742.2,76744.4,76696.4,76683.9,76721.0,76713.1,76659.1,76512.9,76406.7,76309.5,76205.3,76006.3,75665.0,75289.0,74842.1,74277.0,73747.6,73290.8,72917.6,72455.4,72070.3,71705.0,71387.0,71109.3,70831.4,70692.7,70503.7,70317.4,70005.8,69739.7,69521.1,69313.4,69137.8,68877.1,68539.9,68187.8,67879.4,67603.6,67301.4,67008.0,66669.8,66414.0,66225.5,66057.0,65934.8,65809.6,65720.8,65651.0,65496.1,65392.8,65340.0,65294.3,65250.6,65147.3,65132.0,65143.5,65126.2,65060.8,65023.9,65006.5,65029.7,65094.3,65131.5,65124.7,65084.5,65049.1,65038.3,65019.6,64976.6,64937.2,64929.2,64842.8,64770.5,64705.5,64665.8,64644.4,64634.3,64634.2,64644.9,64661.9,64684.2,64669.1,64627.4,64581.1,64535.4,64474.6,64420.4,64370.5,64363.9,64383.4,64547.1,64751.8],"e200":[88934.0,88760.3,88606.2,88460.0,88291.0,88103.1,87921.7,87749.6,87561.5,87388.1,87213.8,87050.8,86872.1,86665.4,86469.9,86271.5,86085.9,85893.3,85724.4,85536.7,85350.5,85171.7,84993.9,84844.4,84678.5,84545.4,84422.0,84303.0,84189.1,84056.8,83935.5,83849.8,83750.3,83660.2,83601.7,83527.8,83451.4,83374.4,83299.4,83259.3,83210.8,83159.4,83101.4,83051.1,82988.8,82919.9,82850.3,82786.7,82743.5,82701.2,82661.1,82634.9,82624.0,82614.8,82587.8,82563.5,82543.2,82532.0,82521.2,82499.4,82463.0,82451.3,82418.5,82376.9,82333.8,82274.9,82217.7,82170.4,82121.6,82068.6,82003.4,81947.5,81904.5,81850.9,81786.1,81698.0,81619.4,81542.9,81464.4,81361.6,81221.7,81071.0,80900.1,80696.4,80498.2,80315.1,80150.5,79961.3,79788.9,79619.4,79460.0,79309.2,79157.1,79039.0,78908.0,78777.1,78613.9,78460.7,78318.5,78178.3,78045.5,77890.7,77715.5,77534.8,77363.6,77199.2,77027.1,76855.8,76672.0,76507.6,76359.4,76215.8,76083.7,75950.9,75827.5,75709.2,75569.8,75443.4,75330.0,75219.0,75109.1,74984.8,74883.1,74789.0,74688.6,74576.9,74472.8,74374.4,74287.0,74211.3,74130.1,74038.8,73939.9,73842.8,73752.6,73661.1,73564.2,73468.8,73381.8,73275.8,73173.6,73073.4,72980.1,72892.0,72807.3,72726.0,72648.2,72572.9,72499.8,72418.2,72330.5,72242.1,72154.3,72063.0,71973.8,71886.0,71809.5,71740.4,71708.7,71689.4],"rsi":[51.3,53.3,57.2,58.5,51.9,47.1,48.3,50.2,45.9,49.3,48.6,51.2,46.6,39.9,42.6,41.6,44.9,42.8,49.2,44.1,44.1,45.8,45.6,53.6,48.4,56.3,58.2,58.9,59.8,53.4,55.9,63.4,58.8,60.6,66.2,61.3,60.3,59.9,60.2,67.0,63.9,62.8,60.3,61.9,57.4,54.9,54.4,56.0,61.5,61.6,62.1,65.7,69.2,69.5,61.0,61.7,62.8,65.3,65.4,59.6,52.8,60.7,52.5,49.4,48.8,43.6,44.0,47.7,47.0,45.3,40.9,44.8,49.9,45.8,41.9,35.3,39.1,39.6,38.8,32.2,25.2,23.5,20.7,17.3,18.7,24.2,30.7,26.8,32.0,32.4,35.4,37.9,37.3,47.9,44.4,44.1,36.7,39.4,42.4,42.6,44.7,38.9,34.5,33.1,36.0,37.9,35.8,35.6,32.4,39.6,44.7,45.8,49.3,48.6,51.4,52.8,45.1,49.2,53.1,53.5,53.5,47.6,55.0,57.0,54.1,49.6,51.9,53.5,56.9,60.3,57.5,52.9,49.5,49.9,52.3,51.3,48.5,48.7,52.3,43.5,44.9,45.5,48.5,50.7,52.0,53.3,54.8,55.7,56.5,50.2,46.1,45.1,45.0,42.3,43.2,43.7,52.1,56.4,71.9,75.1]},"4H":{"t":[1785196800000,1785211200000,1785225600000,1785240000000,1785254400000,1785268800000,1785283200000,1785297600000,1785312000000,1785326400000,1785340800000,1785355200000,1785369600000,1785384000000,1785398400000,1785412800000,1785427200000,1785441600000,1785456000000,1785470400000,1785484800000,1785499200000,1785513600000,1785528000000,1785542400000,1785556800000,1785571200000,1785585600000,1785600000000,1785614400000,1785628800000,1785643200000,1785657600000,1785672000000,1785686400000,1785700800000,1785715200000,1785729600000,1785744000000,1785758400000,1785772800000,1785787200000,1785801600000,1785816000000,1785830400000,1785844800000,1785859200000,1785873600000,1785888000000,1785902400000,1785916800000,1785931200000,1785945600000,1785960000000,1785974400000,1785988800000,1786003200000,1786017600000,1786032000000,1786046400000,1786060800000,1786075200000,1786089600000,1786104000000,1786118400000,1786132800000,1786147200000,1786161600000,1786176000000,1786190400000,1786204800000,1786219200000,1786233600000,1786248000000,1786262400000,1786276800000,1786291200000,1786305600000,1786320000000,1786334400000,1786348800000,1786363200000,1786377600000,1786392000000,1786406400000,1786420800000,1786435200000,1786449600000,1786464000000,1786478400000,1786492800000,1786507200000,1786521600000,1786536000000,1786550400000,1786564800000,1786579200000,1786593600000,1786608000000,1786622400000,1786636800000,1786651200000,1786665600000,1786680000000,1786694400000,1786708800000,1786723200000,1786737600000,1786752000000,1786766400000,1786780800000,1786795200000,1786809600000,1786824000000,1786838400000,1786852800000,1786867200000,1786881600000,1786896000000,1786910400000,1786924800000,1786939200000,1786953600000,1786968000000,1786982400000,1786996800000,1787011200000,1787025600000,1787040000000,1787054400000,1787068800000,1787083200000,1787097600000,1787112000000,1787126400000,1787140800000,1787155200000,1787169600000,1787184000000,1787198400000],"o":[63759.9,63342.3,63505.1,63457.9,63923.4,63898.1,63929.0,63750.6,64561.8,64512.4,63972.4,63582.5,63984.3,64166.9,64021.4,64795.1,64734.0,64800.0,64782.7,64371.2,63954.5,63808.8,62725.1,62976.5,62891.1,63002.1,63056.6,63080.5,63000.1,62530.1,62820.3,63462.6,63493.3,63032.4,63112.0,63456.6,63574.6,62871.6,62628.0,62555.8,63693.0,63867.2,63527.7,63797.4,63683.9,63923.9,64120.9,64232.1,64090.7,64186.2,64168.7,64077.7,64386.2,64838.7,64660.6,64533.2,64824.4,64624.6,64631.0,64445.2,64326.7,64293.7,64318.5,65023.2,64909.7,64954.5,64916.6,65036.1,64956.9,64964.6,65078.4,65074.3,64957.0,64786.7,64824.0,64947.9,65230.4,65181.1,64899.2,64983.1,65203.4,65130.1,64298.0,64050.4,63974.4,64148.2,64070.5,64388.4,63606.7,63539.7,63589.4,63831.5,63833.4,64236.3,63445.9,63422.8,63484.7,63648.3,63858.5,63475.9,63416.7,63412.2,63479.0,63317.6,62923.6,62870.1,62984.8,62964.7,63042.9,63049.1,63076.1,63014.8,63094.0,63120.0,63084.2,63127.2,63059.6,63012.5,63146.7,63106.1,62904.0,63427.0,63527.5,63623.7,64203.7,64309.1,64532.5,64181.9,64194.6,64356.2,64860.3,64649.8,64730.9,64330.8,64293.9,64513.5,68553.5,68430.0,69337.2,69197.2],"h":[63821.2,63661.8,63593.5,64028.8,64100.0,64074.0,64197.0,64569.2,64751.6,64719.1,64686.1,64123.0,64416.8,64185.9,64888.0,65180.0,64989.6,65088.0,65423.7,64490.6,64012.2,63840.0,63307.2,63062.4,63105.1,63139.9,63150.0,63134.6,63032.0,62869.9,63559.9,63639.4,63527.9,63233.3,63612.8,63799.3,63595.6,63000.0,62869.4,63990.0,64085.9,64028.7,63977.0,64244.2,63950.0,64240.0,64409.5,64542.7,64516.9,64526.9,64294.5,64746.4,64936.0,65026.6,64726.0,65000.0,64999.9,64989.1,64841.2,64536.5,64549.9,64475.0,65209.8,65388.0,65075.0,65100.0,65072.9,65073.5,65053.1,65189.8,65150.6,65088.5,65011.4,64868.2,64999.9,65300.0,65260.8,65490.3,65388.0,65368.0,65329.6,65237.8,64355.8,64204.3,64186.3,64157.3,64405.2,64500.0,63655.4,63770.0,63923.2,63892.1,64248.1,64496.9,63580.0,63656.8,63716.9,64014.2,63912.0,63999.9,63571.4,63645.4,63618.7,63484.2,62999.7,63086.5,63244.6,63065.0,63189.1,63154.5,63082.7,63121.9,63121.8,63172.1,63155.8,63150.0,63071.9,63146.7,63390.0,63146.4,63520.8,63720.0,63781.6,64228.1,64630.3,64579.9,64565.4,64455.3,64405.3,65066.1,64896.7,64793.5,64740.9,64415.6,64541.0,69888.0,68991.5,70064.2,69893.5,69928.8],"l":[63055.8,63217.4,63300.0,62741.1,63504.2,63554.9,63653.4,63601.6,64283.7,63891.6,63514.8,63261.6,63606.0,63904.5,63982.0,64600.0,64689.1,64669.2,64180.0,63870.0,63605.8,62457.1,62710.6,62843.9,62891.1,62994.6,62986.8,63000.1,62268.5,62483.0,62806.6,63415.2,62983.5,63011.6,63069.2,63333.3,62784.6,62557.5,62300.0,62437.7,63659.2,63400.0,63328.0,63512.0,63450.3,63615.1,63892.0,64001.1,63950.0,64000.0,64017.0,63880.7,64385.6,64581.6,64444.4,64499.9,64507.1,64172.6,64362.4,64201.0,64234.3,64159.6,64303.1,64782.7,64519.2,64840.4,64821.8,64941.6,64941.4,64918.2,65016.9,64937.1,64722.7,64773.1,64784.9,64913.0,65172.9,64838.7,64826.2,64926.7,64958.3,64205.6,63818.1,63920.0,63893.8,63859.3,64044.5,63450.0,63237.6,63539.7,63527.3,63604.5,63770.0,63318.9,63309.4,63371.1,63376.1,63592.5,63348.2,63416.6,62846.3,63370.7,63303.0,62923.5,62685.7,62521.8,62823.1,62800.0,62991.0,63030.0,62913.3,62945.0,63043.4,63069.3,63005.0,63033.5,62964.3,62989.1,63093.8,62715.7,62750.0,63427.0,63287.8,63439.5,63979.7,64262.7,64039.0,64089.5,64086.9,64047.5,64646.9,64565.3,64278.4,64163.6,64247.3,64471.6,67830.3,68385.6,68916.6,69170.4],"c":[63342.3,63505.1,63457.8,63923.4,63898.1,63929.0,63750.6,64561.1,64512.3,63972.4,63582.4,63984.2,64166.9,64021.4,64795.0,64733.9,64800.0,64782.6,64371.3,63954.5,63808.8,62725.0,62976.5,62891.1,63002.1,63056.6,63080.4,63000.1,62530.0,62820.2,63462.6,63492.5,63032.4,63111.9,63456.6,63574.6,62871.7,62627.9,62555.8,63693.0,63866.0,63527.6,63797.4,63683.9,63923.9,64120.8,64228.4,64090.6,64186.1,64168.6,64077.6,64386.2,64838.7,64659.3,64533.1,64824.3,64624.5,64630.9,64445.3,64325.8,64293.6,64318.4,65023.2,64908.9,64954.2,64916.5,65036.0,64956.9,64964.6,65078.3,65074.3,64956.9,64786.7,64824.0,64947.9,65230.4,65181.0,64899.3,64983.1,65203.4,65130.0,64298.0,64050.3,63974.3,64148.1,64070.5,64388.3,63606.0,63539.9,63589.4,63831.5,63833.3,64236.3,63445.9,63423.2,63484.7,63648.3,63858.5,63475.9,63416.6,63412.9,63478.9,63317.6,62923.5,62870.0,62984.7,62965.2,63042.8,63049.0,63076.0,63014.7,63093.9,63120.0,63084.2,63127.1,63059.5,63012.4,63146.6,63106.1,62903.9,63426.9,63527.4,63625.0,64203.6,64309.0,64532.4,64182.5,64194.6,64356.1,64860.2,64649.8,64730.8,64330.7,64293.9,64513.5,68556.8,68429.9,69337.1,69197.1,69768.1],"v":[1068.0,716.5,807.8,1661.5,507.9,534.8,658.0,860.5,790.5,1130.2,1787.5,942.6,595.6,672.5,750.2,1111.4,375.2,518.7,1258.8,986.3,726.6,2417.8,925.5,377.1,271.9,329.0,234.1,283.7,743.7,244.2,559.3,389.8,315.7,202.2,509.0,356.4,562.1,616.7,536.0,1824.6,687.2,504.7,420.1,952.2,392.1,1196.2,512.7,946.3,2188.8,1019.4,998.1,1594.8,685.3,494.4,308.7,708.7,613.8,879.9,317.0,240.8,343.4,342.1,754.9,1310.4,528.0,206.4,271.3,237.7,133.8,216.0,139.9,132.3,177.9,100.7,186.9,285.3,119.3,454.2,525.1,423.6,379.4,1196.4,834.5,237.7,321.0,544.2,473.3,1081.8,662.9,534.6,1698.3,1032.5,530.1,1364.2,397.0,314.2,605.7,398.5,742.2,2086.5,989.4,707.3,1216.7,747.7,1239.2,1501.7,455.0,278.1,252.7,243.3,215.0,165.3,114.9,78.5,121.8,105.6,116.2,157.6,342.6,278.3,815.5,762.6,445.2,886.4,1179.3,542.7,648.0,730.3,618.2,1376.3,479.1,259.5,524.8,546.7,680.0,7240.0,2263.1,2557.7,1695.2,838.9],"e20":[64605.5,64500.7,64401.3,64355.8,64312.2,64275.7,64225.7,64257.7,64281.9,64252.4,64188.6,64169.2,64168.9,64154.9,64215.9,64265.2,64316.1,64360.6,64361.6,64322.8,64273.9,64126.3,64016.8,63909.6,63823.2,63750.2,63686.4,63621.0,63517.1,63450.8,63451.9,63455.7,63415.4,63386.5,63393.2,63410.5,63359.2,63289.5,63219.6,63264.7,63322.0,63341.6,63385.0,63413.4,63462.1,63524.8,63591.8,63639.3,63691.4,63736.8,63769.3,63828.0,63924.3,63994.3,64045.6,64119.8,64167.8,64211.9,64234.2,64242.9,64247.7,64254.5,64327.7,64383.0,64437.4,64483.0,64535.7,64575.8,64612.8,64657.2,64696.9,64721.7,64727.9,64737.0,64757.1,64802.2,64838.3,64844.1,64857.3,64890.3,64913.1,64854.5,64777.9,64701.4,64648.7,64593.6,64574.1,64481.9,64392.2,64315.7,64269.6,64228.0,64228.8,64154.3,64084.6,64027.5,63991.4,63978.7,63930.8,63881.9,63837.2,63803.1,63756.8,63677.5,63600.6,63541.9,63487.0,63444.7,63407.0,63375.5,63341.1,63317.6,63298.8,63278.3,63263.9,63244.5,63222.4,63215.1,63204.8,63176.1,63200.0,63231.2,63268.7,63357.7,63448.3,63551.6,63611.7,63667.2,63732.8,63840.2,63917.3,63994.7,64026.7,64052.2,64096.1,64520.9,64893.2,65316.5,65686.0,66074.8],"e50":[64725.3,64677.5,64629.7,64602.0,64574.4,64549.1,64517.7,64519.4,64519.2,64497.7,64461.8,64443.1,64432.3,64416.2,64431.0,64442.9,64456.9,64469.7,64465.8,64445.8,64420.8,64354.3,64300.2,64245.0,64196.2,64151.6,64109.5,64066.0,64005.8,63959.3,63939.8,63922.3,63887.4,63857.0,63841.3,63830.8,63793.2,63747.5,63700.8,63700.5,63707.0,63699.9,63703.7,63703.0,63711.6,63727.7,63747.3,63760.8,63777.5,63792.8,63804.0,63826.8,63866.5,63897.6,63922.5,63957.9,63984.0,64009.4,64026.5,64038.2,64048.2,64058.8,64096.6,64128.5,64160.9,64190.5,64223.7,64252.4,64280.3,64311.6,64341.5,64365.7,64382.2,64399.5,64421.0,64452.8,64481.3,64497.7,64516.7,64543.7,64566.7,64556.1,64536.3,64514.3,64499.9,64483.1,64479.3,64445.1,64409.6,64377.4,64356.0,64335.5,64331.6,64296.9,64262.6,64232.1,64209.2,64195.5,64167.3,64137.8,64109.4,64084.7,64054.6,64010.2,63965.5,63927.1,63889.3,63856.1,63824.5,63795.1,63764.5,63738.2,63714.0,63689.3,63667.2,63643.4,63618.7,63600.1,63580.8,63554.2,63549.2,63548.4,63551.4,63577.0,63605.7,63642.0,63663.2,63684.0,63710.4,63755.5,63790.6,63827.4,63847.2,63864.7,63890.1,64073.1,64244.0,64443.7,64630.1,64831.6],"e200":[63137.6,63141.3,63144.4,63152.2,63159.6,63167.3,63173.1,63186.9,63200.1,63207.8,63211.5,63219.2,63228.6,63236.5,63252.0,63266.7,63282.0,63296.9,63307.6,63314.1,63319.0,63313.1,63309.7,63305.6,63302.5,63300.1,63297.9,63294.9,63287.3,63282.7,63284.5,63286.5,63284.0,63282.3,63284.0,63286.9,63282.8,63276.3,63269.1,63273.3,63279.2,63281.7,63286.8,63290.8,63297.1,63305.3,63314.5,63322.2,63330.8,63339.1,63346.5,63356.8,63371.6,63384.4,63395.8,63410.0,63422.1,63434.1,63444.2,63453.0,63461.3,63469.8,63485.3,63499.5,63513.9,63527.9,63542.9,63557.0,63571.0,63586.0,63600.8,63614.3,63625.9,63637.9,63650.9,63666.6,63681.7,63693.8,63706.6,63721.5,63735.5,63741.1,63744.2,63746.5,63750.5,63753.7,63760.0,63758.5,63756.3,63754.6,63755.4,63756.2,63760.9,63757.8,63754.5,63751.8,63750.8,63751.8,63749.1,63745.8,63742.5,63739.9,63735.7,63727.6,63719.0,63711.7,63704.3,63697.7,63691.3,63685.1,63678.5,63672.7,63667.2,63661.4,63656.0,63650.1,63643.8,63638.8,63633.5,63626.3,63624.3,63623.3,63623.3,63629.1,63635.9,63644.8,63650.1,63655.5,63662.5,63674.4,63684.1,63694.6,63700.9,63706.8,63714.8,63763.0,63809.4,63864.4,63917.5,63975.7],"rsi":[34.2,36.7,36.2,43.2,42.9,43.4,41.2,52.5,51.9,45.3,41.2,46.5,48.8,47.1,56.0,55.2,55.9,55.7,49.9,44.8,43.1,33.3,36.9,36.2,37.8,38.7,39.1,38.2,33.4,38.5,48.1,48.5,43.0,44.2,49.1,50.7,42.2,39.7,39.0,53.5,55.3,51.2,54.1,52.7,55.4,57.5,58.6,56.5,57.6,57.4,55.7,59.8,65.0,61.6,59.3,62.8,59.0,59.1,55.6,53.3,52.7,53.2,63.7,61.3,61.9,61.0,62.8,60.8,61.0,62.9,62.8,59.3,54.5,55.3,58.1,63.7,62.1,54.0,55.9,60.4,58.2,40.7,37.1,36.1,40.2,39.0,46.2,35.2,34.4,35.5,40.8,40.8,48.9,38.0,37.7,38.9,42.2,46.1,40.7,39.9,39.8,41.3,38.8,33.5,32.8,35.8,35.5,37.6,37.8,38.6,37.4,39.9,40.8,40.0,41.5,39.8,38.5,43.8,42.7,37.2,53.7,56.1,58.3,68.6,70.0,72.9,62.8,63.0,65.5,72.0,66.4,67.5,57.8,57.0,60.6,85.0,83.2,85.5,83.6,85.1]},"1H":{"t":[1786708800000,1786712400000,1786716000000,1786719600000,1786723200000,1786726800000,1786730400000,1786734000000,1786737600000,1786741200000,1786744800000,1786748400000,1786752000000,1786755600000,1786759200000,1786762800000,1786766400000,1786770000000,1786773600000,1786777200000,1786780800000,1786784400000,1786788000000,1786791600000,1786795200000,1786798800000,1786802400000,1786806000000,1786809600000,1786813200000,1786816800000,1786820400000,1786824000000,1786827600000,1786831200000,1786834800000,1786838400000,1786842000000,1786845600000,1786849200000,1786852800000,1786856400000,1786860000000,1786863600000,1786867200000,1786870800000,1786874400000,1786878000000,1786881600000,1786885200000,1786888800000,1786892400000,1786896000000,1786899600000,1786903200000,1786906800000,1786910400000,1786914000000,1786917600000,1786921200000,1786924800000,1786928400000,1786932000000,1786935600000,1786939200000,1786942800000,1786946400000,1786950000000,1786953600000,1786957200000,1786960800000,1786964400000,1786968000000,1786971600000,1786975200000,1786978800000,1786982400000,1786986000000,1786989600000,1786993200000,1786996800000,1787000400000,1787004000000,1787007600000,1787011200000,1787014800000,1787018400000,1787022000000,1787025600000,1787029200000,1787032800000,1787036400000,1787040000000,1787043600000,1787047200000,1787050800000,1787054400000,1787058000000,1787061600000,1787065200000,1787068800000,1787072400000,1787076000000,1787079600000,1787083200000,1787086800000,1787090400000,1787094000000,1787097600000,1787101200000,1787104800000,1787108400000,1787112000000,1787115600000,1787119200000,1787122800000,1787126400000,1787130000000,1787133600000,1787137200000,1787140800000,1787144400000,1787148000000,1787151600000,1787155200000,1787158800000,1787162400000,1787166000000,1787169600000,1787173200000,1787176800000,1787180400000,1787184000000,1787187600000,1787191200000,1787194800000,1787198400000,1787202000000,1787205600000,1787209200000],"o":[62870.1,62734.8,62656.6,62618.3,62984.8,63134.5,63010.1,62928.1,62964.7,62905.8,62930.3,62882.8,63042.9,63017.8,63038.4,63141.0,63049.1,63120.2,63080.4,63112.4,63076.1,62931.5,63028.3,63041.0,63014.8,63052.7,63058.7,63034.6,63094.0,63093.4,63068.6,63054.9,63120.0,63106.4,63155.0,63129.3,63084.2,63082.1,63082.8,63124.3,63127.2,63082.2,63055.8,63060.2,63059.6,63063.8,62986.2,63009.2,63012.5,63010.6,63058.7,63100.0,63146.7,63255.1,63155.3,63140.9,63106.1,63065.6,62929.4,62917.2,62904.0,62911.2,63104.6,63407.1,63427.0,63542.0,63516.1,63663.5,63527.5,63378.7,63315.8,63688.0,63623.7,63548.6,63673.7,63898.9,64203.7,64115.6,64333.5,64430.3,64309.1,64390.2,64378.9,64292.4,64532.5,64383.7,64200.0,64106.3,64181.9,64219.6,64235.4,64324.5,64194.6,64292.3,64173.6,64203.9,64356.2,64227.6,64224.5,64722.1,64860.3,64843.3,64670.7,64780.6,64649.8,64583.5,64609.8,64644.6,64730.9,64495.2,64408.5,64353.8,64330.8,64318.2,64240.9,64347.5,64293.9,64418.1,64429.4,64458.8,64513.5,64886.6,65015.7,65925.3,68553.5,68462.5,68197.5,68398.0,68430.0,69055.0,69718.5,69264.7,69337.2,69429.0,69724.9,69306.3,69197.2,69491.8,69422.0,69862.3],"h":[62915.9,62822.0,62796.9,63086.5,63218.3,63244.6,63080.9,62998.1,63026.0,62939.9,62959.9,63065.0,63060.2,63043.5,63149.0,63189.1,63150.0,63154.5,63132.5,63130.5,63082.7,63047.5,63049.4,63056.8,63055.5,63080.9,63058.7,63121.9,63121.8,63104.3,63109.4,63120.5,63120.0,63163.2,63172.1,63140.5,63086.5,63082.8,63155.8,63127.2,63150.0,63095.0,63085.3,63063.3,63071.9,63063.8,63012.5,63013.3,63027.1,63065.3,63100.0,63146.7,63390.0,63277.0,63179.0,63233.4,63146.4,63096.0,62956.6,62997.9,62955.5,63249.2,63500.0,63520.8,63589.0,63590.0,63720.0,63669.6,63555.9,63430.0,63695.4,63781.6,63679.6,63799.0,63900.0,64228.1,64217.5,64427.4,64630.3,64430.3,64438.7,64437.7,64420.0,64579.9,64565.4,64385.8,64279.0,64189.9,64249.9,64279.9,64455.3,64359.3,64339.9,64292.3,64222.2,64405.3,64356.2,64292.0,65066.1,64904.9,64896.7,64843.3,64830.0,64800.0,64663.7,64663.8,64656.6,64793.5,64740.9,64549.7,64426.6,64426.1,64405.3,64415.6,64351.1,64403.8,64514.1,64478.0,64468.1,64541.0,64988.9,65221.9,65974.1,69888.0,68991.5,68537.5,68470.0,68494.7,69603.6,70064.2,69846.6,69462.5,69793.0,69893.5,69827.2,69351.4,69610.7,69671.4,69928.8,69862.3],"l":[62726.3,62600.0,62521.8,62611.9,62964.8,63000.0,62888.1,62823.1,62896.9,62871.5,62800.0,62860.6,62991.0,62991.9,63034.4,63045.8,63049.1,63034.8,63030.0,63037.4,62924.4,62913.3,63000.0,62985.4,62945.0,63019.5,62994.8,63025.0,63056.0,63056.8,63043.4,63054.8,63069.3,63098.0,63125.7,63078.5,63060.1,63005.0,63016.7,63110.5,63082.3,63033.5,63038.3,63050.1,63056.3,62964.3,62965.0,62978.6,62989.1,63010.5,63058.5,63100.0,63135.1,63120.0,63117.5,63093.8,63025.7,62742.9,62715.7,62833.4,62750.0,62890.8,63025.4,63338.6,63427.0,63439.5,63476.2,63525.0,63346.3,63287.8,63292.9,63580.0,63533.4,63439.5,63587.2,63810.1,64057.3,63979.7,64282.8,64280.1,64262.7,64295.1,64276.0,64286.4,64360.0,64152.2,64047.1,64039.0,64089.5,64138.2,64163.2,64157.3,64086.9,64140.4,64133.4,64193.1,64215.7,64047.5,64224.3,64655.0,64672.5,64670.6,64655.9,64646.9,64571.5,64571.3,64565.3,64636.5,64484.5,64396.2,64350.0,64278.4,64298.2,64234.8,64163.6,64276.5,64247.3,64360.4,64369.5,64452.6,64471.6,64787.6,65010.1,65888.2,68417.6,67830.3,68034.1,68099.5,68385.6,68981.2,69000.0,69160.6,69319.9,69280.7,69271.6,68916.6,69170.4,69362.6,69347.7,69764.8],"c":[62734.8,62656.6,62618.3,62984.7,63134.5,63010.0,62928.0,62965.2,62905.7,62930.3,62882.7,63042.8,63017.8,63038.3,63141.0,63049.0,63120.1,63080.3,63112.4,63076.0,62931.5,63028.3,63041.0,63014.7,63052.6,63058.6,63034.5,63093.9,63093.3,63068.5,63054.8,63120.0,63106.3,63154.9,63129.2,63084.2,63082.0,63082.7,63124.2,63127.1,63082.3,63055.7,63060.2,63059.5,63063.7,62986.1,63009.1,63012.4,63010.6,63058.6,63099.9,63146.6,63255.1,63155.2,63140.8,63106.1,63065.5,62929.3,62917.2,62903.9,62911.1,63104.6,63407.1,63426.9,63542.0,63516.0,63663.4,63527.4,63378.6,63315.7,63688.0,63625.0,63548.5,63673.6,63898.8,64203.6,64115.6,64333.5,64430.2,64309.0,64390.1,64378.8,64292.4,64532.4,64383.7,64200.0,64106.2,64182.5,64219.5,64235.4,64324.4,64194.6,64292.7,64173.6,64203.9,64356.1,64227.5,64224.4,64722.0,64860.2,64843.2,64670.7,64780.6,64649.8,64583.4,64609.8,64644.5,64730.8,64495.3,64408.5,64353.7,64330.7,64318.1,64240.9,64347.4,64293.9,64418.0,64429.3,64458.8,64513.5,64886.5,65012.6,65925.2,68556.8,68462.4,68193.9,68398.3,68429.9,69055.0,69718.5,69264.5,69337.1,69428.4,69724.9,69306.3,69197.1,69491.8,69421.8,69862.3,69766.5],"v":[121.4,741.1,402.9,236.3,204.5,85.4,86.7,78.5,91.7,42.0,68.7,75.8,35.2,56.3,81.3,79.9,23.8,96.3,28.3,94.9,41.1,56.3,21.4,96.2,30.3,42.9,34.1,58.0,33.1,18.7,26.6,36.6,18.7,19.9,19.3,20.6,18.7,36.7,46.1,20.3,31.4,31.1,27.5,15.6,34.1,31.4,24.3,26.4,19.5,30.9,30.9,76.3,236.4,34.9,32.7,38.6,25.9,91.4,89.9,71.1,128.5,307.0,252.3,127.7,173.5,126.4,177.3,285.3,114.7,53.8,145.7,131.1,180.0,166.2,172.3,367.9,302.0,401.7,330.9,144.7,129.3,179.8,77.7,156.0,185.3,80.3,169.1,213.2,120.8,137.6,177.3,294.6,143.2,67.3,269.5,138.3,99.2,248.5,782.5,246.1,183.7,114.5,102.9,78.0,73.4,58.7,55.5,71.9,98.6,134.0,146.8,145.4,146.7,76.2,138.9,184.9,210.0,177.5,103.1,189.4,379.4,685.9,1305.7,4869.1,1089.4,645.4,218.1,310.2,672.9,1042.5,509.2,333.1,465.7,349.1,420.7,459.7,290.5,235.6,299.5,13.3],"e20":[63163.5,63115.2,63067.9,63060.0,63067.1,63061.6,63048.9,63040.9,63028.1,63018.7,63005.8,63009.3,63010.1,63012.8,63025.0,63027.3,63036.1,63040.3,63047.2,63049.9,63038.7,63037.7,63038.0,63035.8,63037.4,63039.4,63038.9,63044.2,63048.8,63050.7,63051.1,63057.7,63062.3,63071.1,63076.7,63077.4,63077.8,63078.3,63082.7,63086.9,63086.4,63083.5,63081.3,63079.2,63077.7,63069.0,63063.3,63058.5,63053.9,63054.4,63058.7,63067.1,63085.0,63091.7,63096.3,63097.3,63094.2,63078.5,63063.2,63048.0,63035.0,63041.6,63076.4,63109.8,63150.9,63185.7,63231.2,63259.4,63270.8,63275.0,63314.4,63344.0,63363.4,63393.0,63441.2,63513.8,63571.1,63643.7,63718.6,63774.8,63833.4,63885.4,63924.1,63982.1,64020.3,64037.4,64044.0,64057.2,64072.6,64088.1,64110.6,64118.6,64135.2,64138.9,64145.1,64165.2,64171.1,64176.2,64228.2,64288.3,64341.2,64372.6,64411.4,64434.1,64448.4,64463.7,64480.9,64504.7,64503.8,64494.8,64481.3,64467.0,64452.8,64432.6,64424.5,64412.1,64412.6,64414.2,64418.5,64427.5,64471.2,64522.8,64656.4,65027.8,65354.9,65625.3,65889.4,66131.4,66409.8,66724.9,66966.8,67192.5,67405.5,67626.4,67786.4,67920.7,68070.3,68199.0,68357.5,68491.6],"e50":[63436.5,63405.9,63375.0,63359.7,63350.9,63337.5,63321.5,63307.5,63291.7,63277.6,63262.1,63253.5,63244.2,63236.2,63232.4,63225.2,63221.1,63215.6,63211.5,63206.2,63195.5,63188.9,63183.1,63176.5,63171.6,63167.2,63162.0,63159.3,63156.7,63153.3,63149.4,63148.3,63146.6,63146.9,63146.2,63143.8,63141.4,63139.1,63138.5,63138.1,63135.9,63132.7,63129.9,63127.1,63124.6,63119.2,63114.9,63110.9,63106.9,63105.0,63104.8,63106.5,63112.3,63114.0,63115.0,63114.7,63112.8,63105.6,63098.2,63090.6,63083.5,63084.3,63097.0,63109.9,63126.9,63142.1,63162.6,63176.9,63184.8,63189.9,63209.5,63225.8,63238.4,63255.5,63280.7,63316.9,63348.2,63386.9,63427.8,63462.3,63498.7,63533.2,63563.0,63601.0,63631.7,63654.0,63671.7,63691.8,63712.5,63733.0,63756.2,63773.4,63793.7,63808.6,63824.1,63845.0,63860.0,63874.3,63907.5,63944.9,63980.1,64007.2,64037.5,64061.5,64082.0,64102.7,64123.9,64147.7,64161.4,64171.1,64178.2,64184.2,64189.5,64191.5,64197.6,64201.4,64209.9,64218.5,64227.9,64239.1,64264.5,64293.8,64357.8,64522.5,64677.0,64814.9,64955.4,65091.7,65247.1,65422.4,65573.1,65720.7,65866.1,66017.4,66146.4,66266.0,66392.5,66511.3,66642.8,66765.3],"e200":[64147.0,64132.2,64117.1,64105.8,64096.2,64085.4,64073.8,64062.8,64051.3,64040.1,64028.6,64018.8,64008.9,63999.2,63990.7,63981.3,63972.7,63963.8,63955.4,63946.6,63936.5,63927.5,63918.7,63909.7,63901.1,63892.8,63884.2,63876.4,63868.6,63860.6,63852.6,63845.3,63837.9,63831.1,63824.2,63816.8,63809.5,63802.3,63795.5,63788.9,63781.8,63774.6,63767.5,63760.4,63753.5,63745.9,63738.5,63731.3,63724.1,63717.5,63711.4,63705.8,63701.3,63695.8,63690.3,63684.5,63678.3,63670.9,63663.4,63655.8,63648.4,63643.0,63640.7,63638.5,63637.6,63636.4,63636.6,63635.6,63633.0,63629.8,63630.4,63630.4,63629.5,63630.0,63632.7,63638.3,63643.1,63650.0,63657.7,63664.2,63671.4,63678.5,63684.6,63693.0,63699.9,63704.9,63708.9,63713.6,63718.6,63723.7,63729.7,63734.3,63739.9,63744.2,63748.8,63754.8,63759.5,63764.2,63773.7,63784.5,63795.0,63803.8,63813.5,63821.8,63829.4,63837.1,63845.2,63854.0,63860.4,63865.8,63870.7,63875.3,63879.7,63883.3,63887.9,63891.9,63897.1,63902.4,63908.0,63914.0,63923.7,63934.5,63954.3,64000.1,64044.5,64085.8,64128.7,64171.5,64220.1,64274.8,64324.5,64374.3,64424.6,64477.4,64525.4,64571.9,64620.9,64668.6,64720.3,64770.5],"rsi":[30.8,29.1,28.3,44.5,49.6,45.8,43.5,44.9,43.1,44.1,42.5,49.0,48.1,48.9,53.0,49.2,52.1,50.4,51.8,50.1,43.9,48.5,49.1,47.8,49.8,50.1,48.8,52.1,52.1,50.5,49.6,53.8,52.8,56.0,53.9,50.4,50.3,50.3,53.8,54.0,49.7,47.3,47.8,47.7,48.2,40.7,43.5,43.9,43.7,49.9,54.5,59.0,67.3,56.1,54.7,51.3,47.7,37.9,37.1,36.3,37.1,54.2,68.5,69.2,72.9,70.8,75.1,65.5,57.0,53.8,66.0,62.9,59.4,63.1,68.6,74.2,70.3,73.9,75.4,70.1,71.6,71.0,67.1,71.8,65.6,58.8,55.6,57.6,58.6,59.0,61.5,56.2,59.1,54.4,55.4,59.9,54.8,54.7,67.2,69.7,69.0,62.2,64.6,59.8,57.4,58.1,59.1,61.4,52.5,49.6,47.9,47.1,46.7,44.0,48.4,46.4,51.4,51.8,53.0,55.2,66.8,69.6,81.8,91.9,89.9,84.5,85.2,85.4,87.4,89.2,80.9,81.2,81.6,82.8,75.0,73.1,75.0,73.7,76.4,74.6]},"15m":{"t":[1787123700000,1787124600000,1787125500000,1787126400000,1787127300000,1787128200000,1787129100000,1787130000000,1787130900000,1787131800000,1787132700000,1787133600000,1787134500000,1787135400000,1787136300000,1787137200000,1787138100000,1787139000000,1787139900000,1787140800000,1787141700000,1787142600000,1787143500000,1787144400000,1787145300000,1787146200000,1787147100000,1787148000000,1787148900000,1787149800000,1787150700000,1787151600000,1787152500000,1787153400000,1787154300000,1787155200000,1787156100000,1787157000000,1787157900000,1787158800000,1787159700000,1787160600000,1787161500000,1787162400000,1787163300000,1787164200000,1787165100000,1787166000000,1787166900000,1787167800000,1787168700000,1787169600000,1787170500000,1787171400000,1787172300000,1787173200000,1787174100000,1787175000000,1787175900000,1787176800000,1787177700000,1787178600000,1787179500000,1787180400000,1787181300000,1787182200000,1787183100000,1787184000000,1787184900000,1787185800000,1787186700000,1787187600000,1787188500000,1787189400000,1787190300000,1787191200000,1787192100000,1787193000000,1787193900000,1787194800000,1787195700000,1787196600000,1787197500000,1787198400000,1787199300000,1787200200000,1787201100000,1787202000000,1787202900000,1787203800000,1787204700000,1787205600000,1787206500000,1787207400000,1787208300000,1787209200000],"o":[64381.9,64341.2,64359.5,64293.9,64254.9,64294.9,64448.6,64418.1,64392.0,64391.9,64373.9,64429.4,64398.0,64403.9,64406.1,64458.8,64507.7,64507.1,64469.4,64513.5,64510.7,64491.2,64941.9,64886.6,64917.3,65012.0,65046.4,65015.7,65400.7,65408.0,65467.0,65925.3,66649.9,68305.4,68677.5,68553.5,68562.4,68899.9,68587.1,68462.5,68242.4,68007.7,68049.0,68197.5,68187.6,68278.4,68434.6,68398.0,68118.2,68186.4,68399.9,68430.0,68681.1,68700.4,68669.0,69055.0,69441.0,69645.6,69675.0,69718.5,69302.6,69149.4,69351.4,69264.7,69353.0,69378.8,69330.0,69337.2,69581.6,69636.0,69575.5,69429.0,69377.9,69332.6,69640.0,69724.9,69686.6,69510.0,69324.6,69306.3,68999.6,68978.4,69198.6,69197.2,69375.2,69363.6,69355.9,69491.8,69472.8,69589.5,69566.3,69422.0,69385.5,69609.3,69782.9,69862.3],"h":[64382.0,64403.8,64376.7,64334.7,64295.1,64514.1,64481.4,64478.0,64421.9,64404.9,64432.9,64429.4,64406.7,64426.6,64468.1,64541.0,64534.5,64530.0,64534.2,64521.1,64510.7,64955.0,64988.9,65000.0,65039.9,65221.9,65187.1,65439.2,65479.4,65521.5,65974.1,66799.9,69888.0,68856.7,68692.0,68991.5,68931.7,68899.9,68700.0,68537.5,68319.9,68057.1,68269.2,68257.8,68323.9,68449.6,68470.0,68458.2,68398.9,68405.5,68494.7,68713.5,68819.5,68799.8,69603.6,69922.0,69780.8,69844.6,70064.2,69846.6,69418.3,69480.7,69354.0,69425.6,69462.5,69405.7,69346.2,69666.6,69793.0,69700.0,69723.7,69519.9,69448.0,69642.8,69893.5,69827.2,69716.3,69555.9,69392.2,69313.1,69213.6,69225.0,69351.4,69400.0,69414.5,69389.4,69610.7,69562.8,69671.4,69640.1,69566.3,69450.6,69700.0,69799.8,69928.8,69862.3],"l":[64310.3,64338.1,64293.8,64254.8,64247.3,64294.9,64418.0,64392.1,64372.4,64360.4,64370.0,64372.9,64369.5,64382.1,64399.3,64452.6,64483.5,64461.4,64469.4,64471.6,64486.1,64483.1,64819.5,64787.6,64917.2,64805.5,64982.9,65010.1,65318.7,65346.5,65446.9,65888.2,66579.9,67752.7,68232.8,68524.3,68562.3,68551.7,68417.6,68220.1,67844.3,67830.3,68041.2,68034.1,68171.9,68225.7,68319.8,68099.5,68118.2,68134.5,68359.8,68385.6,68558.9,68641.6,68621.7,68981.2,69271.7,69386.2,69508.2,69302.6,69149.3,69000.0,69112.0,69206.8,69272.8,69257.6,69160.6,69319.9,69559.7,69486.1,69382.3,69284.5,69280.7,69300.1,69639.9,69581.8,69492.7,69323.0,69271.6,68916.6,68950.3,68978.4,69162.6,69170.4,69293.2,69233.0,69355.1,69462.5,69448.2,69530.1,69362.6,69362.7,69347.7,69603.3,69782.9,69764.8],"c":[64341.2,64359.5,64293.9,64254.9,64295.0,64448.6,64418.0,64392.1,64391.8,64373.9,64429.3,64398.1,64403.8,64406.0,64458.8,64507.7,64507.0,64469.4,64513.5,64510.7,64491.1,64941.9,64886.5,64917.2,65012.0,65046.4,65012.6,65400.8,65409.7,65466.9,65925.2,66649.9,68305.4,68680.3,68556.8,68562.4,68899.9,68587.4,68462.4,68242.3,68005.5,68049.0,68193.9,68187.8,68278.4,68434.5,68398.3,68120.0,68186.5,68399.9,68429.9,68681.2,68700.7,68669.0,69055.0,69440.9,69645.6,69675.0,69718.5,69302.6,69149.3,69349.5,69264.5,69353.5,69378.8,69330.1,69337.1,69580.4,69637.0,69575.5,69428.4,69378.2,69332.6,69639.9,69724.9,69686.6,69510.0,69324.6,69306.3,68999.6,68978.3,69196.8,69197.1,69375.3,69363.5,69354.6,69491.8,69472.8,69589.5,69566.3,69421.8,69385.5,69609.4,69782.8,69862.3,69766.5],"v":[33.1,35.1,50.1,24.9,43.4,62.3,79.4,104.3,29.3,22.2,21.6,10.3,21.1,41.8,29.9,19.8,39.2,77.2,53.2,16.4,6.3,202.3,154.4,139.5,103.1,284.6,158.7,317.9,275.0,254.4,458.4,877.6,2257.8,1313.4,420.3,487.1,204.0,182.8,215.5,216.8,219.3,124.1,85.2,71.5,47.9,44.8,53.9,74.5,106.0,64.6,65.1,92.8,56.4,30.0,493.8,516.8,153.8,114.4,257.6,194.5,85.8,141.9,87.0,84.7,51.0,147.2,50.2,181.3,78.9,101.5,104.0,70.2,73.7,97.0,108.3,63.2,93.7,89.2,174.6,187.5,99.6,67.0,105.7,120.3,60.1,53.2,57.0,62.2,40.6,50.5,82.2,50.9,91.2,78.1,79.2,13.3],"e20":[64351.3,64352.1,64346.6,64337.8,64333.8,64344.7,64351.7,64355.5,64359.0,64360.4,64367.0,64369.9,64373.2,64376.3,64384.1,64395.9,64406.5,64412.5,64422.1,64430.5,64436.3,64484.5,64522.7,64560.3,64603.3,64645.5,64680.5,64749.1,64812.0,64874.4,64974.5,65134.0,65436.1,65745.0,66012.8,66255.6,66507.5,66705.6,66872.9,67003.3,67098.7,67189.2,67284.9,67370.9,67457.3,67550.4,67631.2,67677.7,67726.2,67790.3,67851.2,67930.3,68003.7,68067.0,68161.1,68283.0,68412.8,68533.0,68645.9,68708.4,68750.4,68807.5,68851.0,68898.9,68944.6,68981.3,69015.2,69069.0,69123.1,69166.2,69191.2,69209.0,69220.7,69260.7,69304.9,69341.2,69357.3,69354.2,69349.6,69316.3,69284.1,69275.8,69268.3,69278.5,69286.6,69293.1,69312.0,69327.3,69352.3,69372.7,69377.3,69378.1,69400.1,69436.6,69477.1,69504.7],"e50":[64431.2,64428.4,64423.1,64416.5,64411.8,64413.2,64413.4,64412.6,64411.7,64410.3,64411.0,64410.5,64410.2,64410.1,64412.0,64415.7,64419.3,64421.3,64424.9,64428.3,64430.7,64450.8,64467.9,64485.5,64506.1,64527.3,64546.3,64579.9,64612.4,64645.9,64696.1,64772.7,64911.2,65059.0,65196.2,65328.2,65468.3,65590.6,65703.2,65802.8,65889.2,65973.9,66060.9,66144.3,66228.0,66314.6,66396.3,66463.9,66531.4,66604.7,66676.3,66754.9,66831.2,66903.3,66987.7,67083.9,67184.3,67282.0,67377.5,67453.0,67519.6,67591.3,67656.9,67723.5,67788.4,67848.8,67907.2,67972.8,68038.1,68098.4,68150.5,68198.7,68243.1,68297.9,68353.9,68406.1,68449.4,68483.7,68516.0,68535.0,68552.4,68577.6,68601.9,68632.2,68660.9,68688.1,68719.6,68749.2,68782.1,68812.9,68836.8,68858.3,68887.7,68922.8,68959.7,68991.3],"e200":[64254.2,64255.3,64255.7,64255.6,64256.0,64258.0,64259.5,64260.9,64262.2,64263.3,64264.9,64266.3,64267.6,64269.0,64270.9,64273.2,64275.6,64277.5,64279.9,64282.1,64284.2,64290.8,64296.7,64302.9,64309.9,64317.3,64324.2,64334.9,64345.6,64356.7,64372.3,64395.0,64433.9,64476.2,64516.8,64557.0,64600.2,64639.9,64678.0,64713.4,64746.2,64779.0,64813.0,64846.6,64880.7,64916.1,64950.8,64982.3,65014.2,65047.9,65081.5,65117.3,65153.0,65188.0,65226.4,65268.4,65311.9,65355.4,65398.8,65437.6,65474.5,65513.1,65550.4,65588.3,65626.0,65662.8,65699.4,65738.0,65776.8,65814.6,65850.6,65885.7,65920.0,65957.0,65994.5,66031.2,66065.8,66098.3,66130.2,66158.7,66186.8,66216.7,66246.4,66277.5,66308.2,66338.5,66369.9,66400.8,66432.5,66463.7,66493.1,66521.9,66552.6,66584.8,66617.4,66648.7],"rsi":[46.7,48.4,43.0,40.2,44.3,56.6,54.0,51.9,51.8,50.3,54.9,51.9,52.4,52.6,57.4,61.2,61.2,56.6,60.3,60.0,57.4,79.2,74.2,75.1,77.8,78.7,75.5,83.7,83.9,84.8,89.6,93.3,96.4,96.8,93.4,93.4,94.1,85.6,82.4,77.0,71.5,71.9,73.2,73.1,73.9,75.5,74.4,66.5,67.4,70.1,70.5,73.5,73.7,72.7,77.0,80.4,81.9,82.1,82.5,69.3,65.1,67.8,65.5,66.8,67.2,65.6,65.8,69.7,70.6,68.3,63.1,61.4,59.8,66.2,67.7,66.3,59.9,54.0,53.5,45.1,44.5,50.8,50.9,55.6,55.2,54.9,58.7,58.0,61.2,60.2,54.4,53.0,59.8,64.1,66.0,61.9]}};
+</script>
+<script>
+const LEVELS = {
+  "1M":[[126200,"ATH 126 200"],[82842,"82 842"],[73787,"73 787"],[66271,"EMA50"],[57809,"57 809"]],
+  "1W":[[82842,"82 842"],[73950,"0.236 Фибо"],[70326,"0.5 Фибо"],[68914,"EMA200 нед."],[62522,"62 522"],[57809,"дъно 57 809"]],
+  "1D":[[73787,"73 787"],[71689,"EMA200 дн."],[70064,"70 064"],[69018,"SMA200"],[66955,"пробит връх"],[64164,"база 64 164"],[62522,"62 522"]],
+  "4H":[[70326,"0.5 Фибо"],[70064,"връх"],[68672,"0.236"],[67810,"0.382"],[66418,"0.618"],[64164,"база"]],
+  "1H":[[70064,"връх 70 064"],[69000,"69 000"],[68492,"EMA20"],[67830,"67 830"],[64164,"база"]],
+  "15m":[[70064,"70 064"],[69893,"69 893"],[69280,"69 280"],[68917,"68 917"]]
+};
+const C = {bull:"#3FCF8E", bear:"#E5484D", e20:"#7E8AA6", e50:"#E8A33D", e200:"#9AA3B5",
+           grid:"#1B2230", axis:"#6B7488", ink:"#ECE8E1", lvl:"#E8A33D", panel:"#101520"};
+
+function fmt(n){return n>=1000? n.toLocaleString("bg-BG",{maximumFractionDigits:0}) : n.toFixed(1);}
+function tlabel(ms, tf){
+  const d=new Date(ms), p=x=>String(x).padStart(2,"0");
+  if(tf==="1M") return d.toLocaleDateString("bg-BG",{month:"short",year:"2-digit",timeZone:"UTC"});
+  if(tf==="1W"||tf==="1D") return p(d.getUTCDate())+"."+p(d.getUTCMonth()+1);
+  return p(d.getUTCDate())+"."+p(d.getUTCMonth()+1)+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes());
+}
+
+function render(cv, tf){
+  const d = MD[tf], lv = LEVELS[tf]||[];
+  const dpr = window.devicePixelRatio||1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W*dpr; cv.height = H*dpr;
+  const x = cv.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,W,H);
+
+  const padR=68, padB=24, padT=10, padL=4;
+  const pw = W-padR-padL, ph = H-padB-padT;
+  const volH = ph*0.16, priceH = ph-volH-6;
+  const n = d.c.length;
+
+  let hi=-Infinity, lo=Infinity;
+  for(let i=0;i<n;i++){ hi=Math.max(hi,d.h[i]); lo=Math.min(lo,d.l[i]); }
+  for(const s of ["e20","e50","e200"]) for(let i=0;i<n;i++){ if(d[s][i]){hi=Math.max(hi,d[s][i]); lo=Math.min(lo,d[s][i]);} }
+  for(const [p] of lv){ if(p<hi*1.35 && p>lo*0.7){ hi=Math.max(hi,p); lo=Math.min(lo,p);} }
+  const pad=(hi-lo)*0.06; hi+=pad; lo-=pad;
+  const Y = v => padT + priceH - (v-lo)/(hi-lo)*priceH;
+  const X = i => padL + (i+0.5)*(pw/n);
+  const cw = Math.max(1.2, (pw/n)*0.66);
+
+  // grid + price axis
+  x.font="11px 'IBM Plex Mono', monospace"; x.textBaseline="middle";
+  const ticks=6;
+  for(let t=0;t<=ticks;t++){
+    const v = lo + (hi-lo)*t/ticks, y = Y(v);
+    x.strokeStyle=C.grid; x.lineWidth=1; x.beginPath(); x.moveTo(padL,y+.5); x.lineTo(padL+pw,y+.5); x.stroke();
+    x.fillStyle=C.axis; x.textAlign="left"; x.fillText(fmt(v), padL+pw+8, y);
+  }
+  // time axis
+  x.textAlign="center"; x.textBaseline="top";
+  const step = Math.max(1, Math.round(n/6));
+  for(let i=Math.floor(step/2); i<n; i+=step){
+    x.fillStyle=C.axis; x.fillText(tlabel(d.t[i],tf), X(i), padT+ph+7);
+    x.strokeStyle=C.grid; x.beginPath(); x.moveTo(X(i)+.5,padT); x.lineTo(X(i)+.5,padT+priceH); x.stroke();
+  }
+
+  // volume
+  let vmax=0; for(const v of d.v) vmax=Math.max(vmax,v);
+  for(let i=0;i<n;i++){
+    const h = d.v[i]/vmax*volH;
+    x.fillStyle = d.c[i]>=d.o[i] ? "rgba(63,207,142,.28)" : "rgba(229,72,77,.28)";
+    x.fillRect(X(i)-cw/2, padT+ph-h, cw, h);
+  }
+
+  // level lines (labels staggered so they never overlap)
+  x.lineWidth=1;
+  const vis = lv.filter(([p])=>p<=hi&&p>=lo).map(([p,label])=>({p,label,y:Y(p)})).sort((a,b)=>a.y-b.y);
+  x.font="10px 'IBM Plex Mono', monospace";
+  let colEnd=[];
+  for(const L of vis){
+    x.setLineDash([4,4]);
+    x.strokeStyle="rgba(232,163,61,.42)"; x.beginPath(); x.moveTo(padL,L.y+.5); x.lineTo(padL+pw,L.y+.5); x.stroke();
+    x.setLineDash([]);
+    const w = x.measureText(L.label).width + 10;
+    let col=0;
+    while(colEnd[col]!==undefined && L.y - colEnd[col] < 12) col++;
+    let lx = padL+6; for(let k=0;k<col;k++) lx += (colEnd[k+"w"]||0);
+    colEnd[col]=L.y; colEnd[col+"w"]=Math.max(colEnd[col+"w"]||0, w+8);
+    x.fillStyle="rgba(232,163,61,.9)"; x.textAlign="left"; x.textBaseline="bottom";
+    x.fillText(L.label, lx, L.y-3);
+  }
+  x.font="11px 'IBM Plex Mono', monospace"; x.textBaseline="middle";
+
+  // candles
+  for(let i=0;i<n;i++){
+    const up = d.c[i]>=d.o[i];
+    x.strokeStyle = up?C.bull:C.bear; x.fillStyle = up?C.bull:C.bear;
+    x.lineWidth=1;
+    x.beginPath(); x.moveTo(Math.round(X(i))+.5, Y(d.h[i])); x.lineTo(Math.round(X(i))+.5, Y(d.l[i])); x.stroke();
+    const y1=Y(d.o[i]), y2=Y(d.c[i]);
+    x.fillRect(X(i)-cw/2, Math.min(y1,y2), cw, Math.max(1.2,Math.abs(y2-y1)));
+  }
+
+  // EMAs
+  const line=(key,color,w)=>{
+    x.strokeStyle=color; x.lineWidth=w; x.beginPath(); let started=false;
+    for(let i=0;i<n;i++){ const v=d[key][i]; if(!v) continue;
+      if(!started){x.moveTo(X(i),Y(v)); started=true;} else x.lineTo(X(i),Y(v)); }
+    x.stroke();
+  };
+  line("e200",C.e200,1.4); line("e50",C.e50,1.3); line("e20",C.e20,1.3);
+
+  // last price tag
+  const last=d.c[n-1], up=last>=d.o[n-1], ly=Y(last);
+  x.fillStyle= up?C.bull:C.bear;
+  x.fillRect(padL+pw+2, ly-9, padR-6, 18);
+  x.fillStyle="#0C0F16"; x.textAlign="left"; x.textBaseline="middle";
+  x.font="600 11px 'IBM Plex Mono', monospace";
+  x.fillText(fmt(last), padL+pw+8, ly);
+
+  return {X,Y,n,d,padL,pw,padT,ph,priceH,tf};
+}
+
+const charts=[];
+function build(){
+  document.querySelectorAll("canvas[data-tf]").forEach(cv=>{
+    const tf=cv.dataset.tf;
+    const geo=render(cv,tf);
+    charts.push({cv,tf,geo});
+  });
+}
+
+// crosshair + tooltip
+const tip=document.createElement("div");
+tip.style.cssText="position:fixed;pointer-events:none;z-index:50;background:#141924;border:1px solid #232A3A;border-radius:3px;padding:8px 10px;font:11.5px/1.55 'IBM Plex Mono',monospace;color:#ECE8E1;white-space:pre;display:none;box-shadow:0 6px 20px rgba(0,0,0,.5)";
+document.body.appendChild(tip);
+
+function attach(){
+  charts.forEach(ch=>{
+    const {cv}=ch;
+    cv.addEventListener("pointermove", e=>{
+      const r=cv.getBoundingClientRect();
+      const g=ch.geo, d=g.d;
+      const i=Math.max(0,Math.min(g.n-1, Math.floor(((e.clientX-r.left)-g.padL)/(g.pw/g.n))));
+      const up=d.c[i]>=d.o[i];
+      tip.style.display="block";
+      tip.innerHTML=`<span style="color:#8A93A6">${tlabel(d.t[i],ch.tf)} · ${ch.tf}</span>\n`+
+        `О ${fmt(d.o[i])}   В ${fmt(d.h[i])}\n`+
+        `Н ${fmt(d.l[i])}   З <span style="color:${up?C.bull:C.bear}">${fmt(d.c[i])}</span>\n`+
+        `<span style="color:#8A93A6">обем ${fmt(d.v[i])} · RSI ${d.rsi[i]??"—"}</span>`;
+      const tw=tip.offsetWidth, th=tip.offsetHeight;
+      tip.style.left=Math.min(window.innerWidth-tw-10, e.clientX+16)+"px";
+      tip.style.top=Math.max(8, e.clientY-th-12)+"px";
+    });
+    cv.addEventListener("pointerleave", ()=>{tip.style.display="none";});
+  });
+}
+
+function redraw(){ charts.forEach(ch=>{ ch.geo=render(ch.cv, ch.tf); }); }
+let rt;
+window.addEventListener("resize", ()=>{ clearTimeout(rt); rt=setTimeout(redraw,150); });
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+build(); attach();
+</script>
+</body></html>
